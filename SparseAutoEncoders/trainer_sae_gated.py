@@ -1,13 +1,23 @@
 # haven't used the resample code and parallel component code
-
+# Works well
 
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import torch.optim as optim
-from sae_gated import GatedAutoEncoder, config
+from sae_gated import GatedAutoEncoder
 from sae_dataset import SAE_Dataset
 from torch.utils.data import Dataset, DataLoader
+
+config = {
+    'activation_dim':768,
+    'dict_dim':16384,
+    'l1_coeff':3e-4,
+    'batch_size': 32,
+    'num_epochs': 200,
+    'lr':1e-4,
+    'k': 5
+}
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

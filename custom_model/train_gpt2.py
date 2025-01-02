@@ -52,7 +52,7 @@ def zeroth_power_via_newtonschulz5(G, steps=5, eps=1e-7):
     orthogonalization method traces to Bernstein & Newhouse (2024) https://arxiv.org/abs/2409.20325
     who suggested its use for computing the preconditioners of Shampoo.
     """
-    assert len(G.shape) == 2
+    assert len(G.shape) == 2 # works on 2 dim only
     a, b, c = (3.4445, -4.7750,  2.0315)
     X = G.bfloat16() / (G.norm() + eps) # ensure top singular value <= 1
     if G.size(0) > G.size(1):

@@ -3,14 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import random
 
-config = {
-    'activation_dim':768,
-    'dict_dim':16384,
-    'l1_coeff':3e-4,
-    'batch_size': 32,
-    'num_epochs': 200,
-    'lr':1e-4
-}
 
 
 class ReluAutoEncoder(nn.Module):
@@ -34,8 +26,6 @@ class ReluAutoEncoder(nn.Module):
         self.step_counter = 0
 
     def forward(self,x):
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
         x_cent = x - self.b_dec
         acts = F.relu(x_cent@self.W_enc + self.b_enc)
         x_reconstruct = acts@self.W_dec + self.b_dec
@@ -111,6 +101,15 @@ class ReluAutoEncoder(nn.Module):
         self.step_counter = 0
 
 if __name__ == '__main__':
+    config = {
+    'activation_dim':768,
+    'dict_dim':16384,
+    'l1_coeff':3e-4,
+    'batch_size': 128,
+    'num_epochs': 1000,
+    'lr':1e-4
+    }
+
     sae = ReluAutoEncoder(cfg=config)
     d = sae(torch.ones([config['activation_dim']]))
 

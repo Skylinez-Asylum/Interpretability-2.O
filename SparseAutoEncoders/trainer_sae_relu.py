@@ -1,13 +1,23 @@
 # haven't used the resample code and parallel component code
-
+# Works well
 
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import torch.optim as optim
-from sae_relu import ReluAutoEncoder, config
+from sae_relu import ReluAutoEncoder
 from sae_dataset import SAE_Dataset
 from torch.utils.data import Dataset, DataLoader
+
+config = {
+    'activation_dim':768,
+    'dict_dim':16384,
+    'l1_coeff':3e-4,
+    'batch_size': 128,
+    'num_epochs': 200,
+    'lr':1e-4
+}
+
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -17,7 +27,7 @@ test_dataloader = DataLoader(dataset = dataset, batch_size = config['batch_size'
 
 model = ReluAutoEncoder(cfg = config).to(device)
 criterion = nn.MSELoss()
-optimiser = optim.Adam(model.parameters(), lr=config['lr'])
+optimiser = optim.AdamW(model.parameters(), lr=config['lr'])
 
 # training loop
 for epoch in range(config['num_epochs']):

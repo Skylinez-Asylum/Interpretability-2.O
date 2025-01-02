@@ -16,3 +16,7 @@ class SAE_Dataset(Dataset):
     def __len__(self):
         return self.m
     
+if __name__ == '__main__':
+    ds = SAE_Dataset()
+    print(ds.x)
+    print(ds.y)
