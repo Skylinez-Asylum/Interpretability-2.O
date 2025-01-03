@@ -1,3 +1,6 @@
+'''This might be the original training code, but the GPT architecture is different from other ones (atleast in terms of naming conventions) '''
+
+
 import os
 import sys
 import uuid
