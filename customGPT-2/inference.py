@@ -37,13 +37,13 @@ def inference(model,inp:str,max_length:int = 50,num_return_sequences:int =1):
 
 
 if __name__ == '__main__':
-    # torch.set_float32_matmul_precision('high')  # use tf32 <- felt this gives worse answers sometims
+    torch.set_float32_matmul_precision('high')  # use tf32 <- felt this gives worse answers sometims
     path = r"customGPT-2/save_states/state_step555000.pt"
     print('Loading model...')
     model = load_model(path)
     model.to('cuda')
     print('Model loaded')
-    inp= "hello i am"
+    inp= "a train is"
 
-    out = inference(model,inp,300,10)
+    out = inference(model,inp,30,10)
     print(out)
