@@ -130,15 +130,24 @@ class GPT(nn.Module):
 
         return logits, loss
 
-
-
 def remove_prefix(state_dict, prefix):
     return {k[len(prefix):] if k.startswith(prefix) else k: v for k, v in state_dict.items()}
 
 def load_model(checkpoint_path):
-    checkpoint = torch.load(checkpoint_path, map_location='cuda')
+    checkpoint = torch.load(checkpoint_path, map_location='cuda', weights_only=True)
     model_state_dict = checkpoint['model']
     model_state_dict = remove_prefix(model_state_dict, "_orig_mod.")
     new_model = GPT(GPTConfig)  
     new_model.load_state_dict(model_state_dict)
     return new_model
+
+if __name__ == '__main__':
+    import torchinfo
+    path = r"customGPT-2/save_states/state_step555000.pt"
+    print('Loading model...')
+    model = load_model(path)
+    # print(model)
+
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f'Total number of parameters: {total_params/10**6}M')
+    torchinfo.summary(model)
