@@ -1,15 +1,12 @@
 from model import load_model
-
 from warnings import filterwarnings
-filterwarnings('ignore')
-
 import tiktoken
 import torch
 from torch.nn import functional as F 
+filterwarnings('ignore')
 
 def inference(model,inp:str,max_length:int = 50,num_return_sequences:int =1):
     model.eval()
-
     enc = tiktoken.get_encoding('gpt2')
     tokens = enc.encode(inp)
     tokens = torch.tensor(tokens,dtype=torch.long, device='cuda')
@@ -35,16 +32,18 @@ def inference(model,inp:str,max_length:int = 50,num_return_sequences:int =1):
         tokens = x[i,:max_length].tolist()
         decode = enc.decode(tokens)
         outs.append(decode)
+
     return outs
 
 
 if __name__ == '__main__':
-    torch.set_float32_matmul_precision('high')  # use tf32
-    path = r"customGPT-2/save_states/state_step500000.pt"
+    # torch.set_float32_matmul_precision('high')  # use tf32 <- felt this gives worse answers sometims
+    path = r"customGPT-2/save_states/state_step555000.pt"
     print('Loading model...')
     model = load_model(path)
     model.to('cuda')
     print('Model loaded')
-    inp= "GPT2 is a  "
-    out = inference(model,inp,50,1)
+    inp= "hello i am"
+
+    out = inference(model,inp,300,10)
     print(out)

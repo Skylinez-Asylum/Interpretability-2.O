@@ -1,3 +1,6 @@
+import torch.nn.functional as F
+import torch.nn as nn
+import torch
 from dataclasses import dataclass
 
 @dataclass
@@ -8,14 +11,7 @@ class GPTConfig:
         n_head:int = 6
         n_embd:int = 768
 
-
-
-
-import torch.nn.functional as F
-import torch.nn as nn
-import torch
 class Rotary(torch.nn.Module):
-
     def __init__(self, dim, base=10000):
         super().__init__()
         self.inv_freq = 1.0 / (base ** (torch.arange(0, dim, 2).float() / dim))
@@ -125,7 +121,7 @@ class GPT(nn.Module):
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), ignore_index=-1)
         else:
             # inference-time mini-optimization: only forward the lm_head on the very last position
-            logits = self.lm_head(x[:, :, :]) # note: using list [-1] to preserve the time dim
+            logits = self.lm_head(x[:, [-1], :]) # note: using list [-1] to preserve the time dim
             logits = logits.float() # use tf32/fp32 for logits
             loss = None
         # there are performance reasons why not returning logits is prudent, if not needed
