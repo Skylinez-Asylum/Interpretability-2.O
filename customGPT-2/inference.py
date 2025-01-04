@@ -43,7 +43,7 @@ if __name__ == '__main__':
     model = load_model(path)
     model.to('cuda')
     print('Model loaded')
-    inp= "a train is"
+    inp= "hey"
 
-    out = inference(model,inp,30,1)
+    out = inference(model,inp,2,1)
     print(out)
