@@ -2,6 +2,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 import torch
 from dataclasses import dataclass
+import numpy as np
 
 @dataclass
 class GPTConfig:
@@ -75,9 +76,15 @@ class MLP(nn.Module):
         self.c_proj  = nn.Linear(4 * config.n_embd, config.n_embd, bias=False)
         self.c_proj.weight.data.zero_() # zero init suggested by @Grad62304977
 
-    def forward(self, x):
+    def forward(self, x, layer_ct):
         x = self.c_fc(x)
         x = F.relu(x).square() # https://arxiv.org/abs/2109.08668v2; ~1-2% better than GELU; suggested by @SKYLINEZ007 and @Grad62304977
+        if layer_ct == 11: # last layer
+            # print(x.shape)
+            # saving activations
+            processed_activations = x.detach().cpu().numpy()
+            np.save('customGPT-2/save_states/activations.npy', np.array(processed_activations, dtype=object))
+
         x = self.c_proj(x)
         return x
 
@@ -88,9 +95,9 @@ class Block(nn.Module):
         self.attn = CausalSelfAttention(config)
         self.mlp = MLP(config)
 
-    def forward(self, x):
+    def forward(self, x, layer_ct):
         x = x + self.attn(F.rms_norm(x, (x.size(-1),)))
-        x = x + self.mlp(F.rms_norm(x, (x.size(-1),)))
+        x = x + self.mlp(F.rms_norm(x, (x.size(-1),)), layer_ct)
         return x
 
 class GPT(nn.Module):
@@ -110,8 +117,9 @@ class GPT(nn.Module):
 
         # forward the GPT model itself
         x = self.transformer.wte(idx) # token embeddings of shape (b, t, n_embd)
-        for block in self.transformer.h:
-            x = block(x)
+        for layer_ct, block in enumerate(self.transformer.h):
+            # print(layer_ct)
+            x = block(x, layer_ct)
         x = F.rms_norm(x, (x.size(-1),))
 
         if targets is not None:
@@ -143,11 +151,18 @@ def load_model(checkpoint_path):
 
 if __name__ == '__main__':
     import torchinfo
+    from inference import inference
     path = r"customGPT-2/save_states/state_step555000.pt"
     print('Loading model...')
-    model = load_model(path)
-    # print(model)
+    model = load_model(path).to('cuda')
 
-    total_params = sum(p.numel() for p in model.parameters())
-    print(f'Total number of parameters: {total_params/10**6}M')
-    torchinfo.summary(model)
+    inp= "hey"
+
+    out = inference(model,inp,30,1)
+    print(out)
+
+
+
+    # reading from activations
+    loaded = np.load('customGPT-2/save_states/activations.npy', allow_pickle=True)
+    print(loaded.shape)

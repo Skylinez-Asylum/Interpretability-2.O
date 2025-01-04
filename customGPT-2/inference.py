@@ -45,5 +45,5 @@ if __name__ == '__main__':
     print('Model loaded')
     inp= "hey"
 
-    out = inference(model,inp,2,1)
+    out = inference(model,inp,10,1)
     print(out)
