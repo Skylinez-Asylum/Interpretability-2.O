@@ -1,0 +1,2 @@
+# from sparseAutoEncoders.sae.sae_gated import GatedAutoEncoder
+from sparseAutoEncoders.sae_trainer.sae_gated import GatedAutoEncoder

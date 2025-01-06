@@ -1,13 +1,15 @@
-# haven't used the resample code and parallel component code
 # Works well
 
+from sae_gated import GatedAutoEncoder
+
+import os
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import torch.optim as optim
-from sae_gated import GatedAutoEncoder
 from sae_dataset import SAE_Dataset
 from torch.utils.data import Dataset, DataLoader
+
 
 config = {
     'activation_dim':768,

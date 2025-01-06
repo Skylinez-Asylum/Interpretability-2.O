@@ -14,7 +14,7 @@ def inference(model,inp:str,max_length:int = 50,num_return_sequences:int =1):
     x = tokens
     torch.manual_seed(42)
     while x.size(1) < max_length:
-        with torch.no_grad():
+        with torch.inference_mode():
             logits, _ = model(x)  # Unpack the tuple (logits, loss)
             logits = logits[:, [-1], :]  # Take the last time step logits (shape: [batch_size, 1, vocab_size])
             probs = F.softmax(logits, dim=-1)  # Apply softmax to get probabilities (shape: [batch_size, 1, vocab_size])

@@ -52,7 +52,7 @@ class TopKAutoEncoder(nn.Module):
         # t(acts)
         x_reconstruct = self.decode(acts)
         l2_loss = (x_reconstruct.float() - x.float()).pow(2).sum(-1).mean(0)
-        print(l2_loss)
+        # print(l2_loss)
         l1_loss = torch.tensor(0) # sample to fill the spot
         loss = l2_loss+l1_loss
         return loss, x_reconstruct, acts, l2_loss,l1_loss
