@@ -2,17 +2,18 @@ from model import load_model
 from warnings import filterwarnings
 import tiktoken
 import torch
-from torch.nn import functional as F 
+from torch.nn import functional as F
+from print_color import print
 filterwarnings('ignore')
 
-def inference(model,inp:str,max_length:int = 50,num_return_sequences:int =1):
+def inference(model,inp:str,max_length:int = 50,num_return_sequences:int =1, extracting_activations = False):
     model.eval()
     enc = tiktoken.get_encoding('gpt2')
     tokens = enc.encode(inp)
     tokens = torch.tensor(tokens,dtype=torch.long, device='cuda')
     tokens = tokens.unsqueeze(0).repeat(num_return_sequences,1)
     x = tokens
-    torch.manual_seed(42)
+    # torch.manual_seed(42)
     while x.size(1) < max_length:
         with torch.inference_mode():
             logits, _ = model(x)  # Unpack the tuple (logits, loss)
@@ -30,20 +31,22 @@ def inference(model,inp:str,max_length:int = 50,num_return_sequences:int =1):
     outs=[]
     for i in range(num_return_sequences):
         tokens = x[i,:max_length].tolist()
+        # print(tokens)
         decode = enc.decode(tokens)
         outs.append(decode)
-
+    if extracting_activations: return outs, tokens
     return outs
 
 
 if __name__ == '__main__':
-    torch.set_float32_matmul_precision('high')  # use tf32 <- felt this gives worse answers sometims
-    path = r"customGPT-2/save_states/state_step555000.pt"
+    torch.set_float32_matmul_precision('high')  # use tf32 <- felt this gives worse answers sometimes
+    path = r"customGPT-2/save_states/FT50k.pt"
     print('Loading model...')
     model = load_model(path)
     model.to('cuda')
-    print('Model loaded')
-    inp= "hey"
+    print('Model loaded\n\n')
+    inp= "f"
 
-    out = inference(model,inp,10,1)
-    print(out)
+    out = inference(model,inp,30,1)
+    for i in out:
+        print(i, '\n')

@@ -1,3 +1,4 @@
-# SAE
-- Relu sae training works properly
-- 
+- hellaswag eval
+- finetuned model
+- sae code
+- activation code

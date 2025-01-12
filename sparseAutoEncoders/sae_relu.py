@@ -112,6 +112,7 @@ if __name__ == '__main__':
 
     sae = ReluAutoEncoder(cfg=config)
     d = sae(torch.ones([config['activation_dim']]))
+    print(d)
 
 
 

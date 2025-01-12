@@ -4,8 +4,8 @@ from torch.utils.data import Dataset, DataLoader
 
 
 class SAE_Dataset(Dataset):
-    def __init__(self):
-        dataset = torch.rand((100, 768)) # put this in some variable
+    def __init__(self, len=100):
+        dataset = torch.rand((len, 768)) # put this in some variable
         self.x = dataset
         self.y = dataset
         self.m = dataset.shape[0]
