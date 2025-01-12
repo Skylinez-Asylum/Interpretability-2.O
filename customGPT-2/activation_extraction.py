@@ -4,8 +4,12 @@ import torch
 from dataclasses import dataclass
 import numpy as np
 import pandas as pd
+import h5py
+from pathlib import Path
+from typing import Dict, List, Union, Optional
+# np.set_printoptions(threshold=np.inf) # to print numpy array properly
 
-np.set_printoptions(threshold=np.inf)
+
 @dataclass
 class GPTConfig:
         block_size:int = 1024
@@ -150,11 +154,6 @@ class GPT(nn.Module):
 
 # Data structure
 
-import h5py
-import numpy as np
-from pathlib import Path
-from typing import Dict, List, Union, Optional
-
 class WordActivationStorage:
     """
     Stores and retrieves multiple activations per word using HDF5.
@@ -267,134 +266,6 @@ class WordActivationStorage:
             "min": np.min(activations, axis=0),
             "max": np.max(activations, axis=0)
         }
-    
-import h5py
-import numpy as np
-from typing import Dict, List, Optional
-from pathlib import Path
-
-import h5py
-import numpy as np
-from typing import Dict, List, Optional
-
-def load_activations(filepath: str) -> Dict[str, np.ndarray]:
-    """
-    Load all word activations from an HDF5 file.
-    Handles potentially different shapes across activations.
-    
-    Returns:
-        Dictionary mapping words to their activation arrays
-    """
-    data = {}
-    with h5py.File(filepath, 'r') as f:
-        words = list(f['word_activations'].keys())
-        
-        for word in words:
-            word_group = f['word_activations'][word]
-            indices = sorted([int(k) for k in word_group.keys()])
-            
-            # Load first activation to get shape
-            first_activation = word_group['0'][:]
-            activation_shape = first_activation.shape
-            
-            # Pre-allocate array with correct shape
-            n_activations = len(indices)
-            all_activations = np.zeros((n_activations, *activation_shape))
-            
-            # Load each activation
-            for idx, i in enumerate(indices):
-                activation = word_group[str(i)][:]
-                all_activations[idx] = activation
-                
-            data[word] = all_activations
-            
-    return data
-
-def load_single_word(filepath: str, word: str) -> Optional[np.ndarray]:
-    """Load activations for a specific word."""
-    with h5py.File(filepath, 'r') as f:
-        if word not in f['word_activations']:
-            return None
-        
-        word_group = f['word_activations'][word]
-        indices = sorted([int(k) for k in word_group.keys()])
-        
-        # Load first activation to get shape
-        first_activation = word_group['0'][:]
-        activation_shape = first_activation.shape
-        
-        # Pre-allocate array with correct shape
-        all_activations = np.zeros((len(indices), *activation_shape))
-        
-        # Load each activation
-        for idx, i in enumerate(indices):
-            activation = word_group[str(i)][:]
-            all_activations[idx] = activation
-            
-        return all_activations
-
-def explore_file_structure(filepath: str, show_shapes: bool = True):
-    """Print the structure and shapes of the HDF5 file for debugging."""
-    print("File structure:")
-    with h5py.File(filepath, 'r') as f:
-        def print_structure(name, obj):
-            indent = '  ' * name.count('/')
-            if isinstance(obj, h5py.Dataset):
-                if show_shapes:
-                    print(f"{indent}{name}: Dataset shape={obj.shape}, dtype={obj.dtype}")
-                else:
-                    print(f"{indent}{name}: Dataset")
-            else:
-                print(f"{indent}{name}: Group")
-                
-        f.visititems(print_structure)
-
-def check_activation_shapes(filepath: str) -> Dict[str, List[tuple]]:
-    """
-    Check shapes of all activations to debug potential mismatches.
-    
-    Returns:
-        Dictionary mapping words to lists of shapes for each activation
-    """
-    shapes = {}
-    with h5py.File(filepath, 'r') as f:
-        for word in f['word_activations']:
-            word_group = f['word_activations'][word]
-            shapes[word] = [word_group[str(i)].shape for i in range(len(word_group))]
-    return shapes
-
-
-# basic functoins
-def remove_prefix(state_dict, prefix):
-    return {k[len(prefix):] if k.startswith(prefix) else k: v for k, v in state_dict.items()}
-
-def load_model(checkpoint_path):
-    checkpoint = torch.load(checkpoint_path, map_location='cuda', weights_only=True)
-    model_state_dict = checkpoint['model']
-    model_state_dict = remove_prefix(model_state_dict, "_orig_mod.")
-    new_model = GPT(GPTConfig)  
-    new_model.load_state_dict(model_state_dict)
-    return new_model
-
-def extract_activations(model, inp):
-    _, tokens = inference(model,inp,30,1, extracting_activations=True)
-    print(len(tokens), len(activation_list))
-    assert len(tokens) - 1 == len(activation_list), 'A bug has to be fixed which wont allow initial tokens to be greater than 1' # activation for the last token will not be generated 
-
-    for token, activation in zip(tokens, activation_list):
-
-        storage.add_activation(str(token), activation)
-
-
-
-
-
-
-
-
-import h5py
-import numpy as np
-from typing import Dict, List, Optional
 
 def load_single_word(filepath: str, word: str) -> Optional[np.ndarray]:
     """
@@ -459,16 +330,41 @@ def print_activation_info(filepath: str, word: str):
             print(f"Instance {i}: {activation.shape}")
 
 
+# basic functoins
+def remove_prefix(state_dict, prefix):
+    return {k[len(prefix):] if k.startswith(prefix) else k: v for k, v in state_dict.items()}
+
+def load_model(checkpoint_path):
+    checkpoint = torch.load(checkpoint_path, map_location='cuda', weights_only=True)
+    model_state_dict = checkpoint['model']
+    model_state_dict = remove_prefix(model_state_dict, "_orig_mod.")
+    new_model = GPT(GPTConfig)  
+    new_model.load_state_dict(model_state_dict)
+    return new_model
+
+def extract_activations(model, inp):
+    _, tokens = inference(model,inp,30,1, extracting_activations=True)
+    print(len(tokens), len(activation_list))
+    assert len(tokens) - 1 == len(activation_list), 'A bug has to be fixed which wont allow initial tokens to be greater than 1' # activation for the last token will not be generated 
+
+    for token, activation in zip(tokens, activation_list):
+
+        storage.add_activation(str(token), activation)
 
 
 
 
-# if __name__ == '__main__':
+
+
+
+
+if __name__ == '__main__':
 
     # from inference import inference
     # import pandas as pd
+    # import tiktoken
 
-
+    # enc = tiktoken.get_encoding('gpt2')
     # path = r"customGPT-2/save_states/FT50k.pt"
     # storage = WordActivationStorage('word_activations.h5')
 
@@ -485,33 +381,19 @@ def print_activation_info(filepath: str, word: str):
     # # print(activation_dict)
 
     # df = pd.DataFrame.from_dict(activation_dict, orient="index")
-    # df.to_csv("activations.csv", index=True)
-
-
-    # Read activations
+    # df.to_csv("activations.csv", index=True)   
 
     
+    '''Load single word activations '''
 
-# First, let's check the file structure and shapes
+    activations = load_single_word('word_activations.h5', '12')
 
-    # try:
-    #     cow_activations = load_single_word('word_activations.h5', '12')
-    #     print("Single word shape:", cow_activations.shape)
-        
-    # except Exception as e:
-    #     print(f"Error occurred: {str(e)}")
+    # Print information about each activation
+    print("\nActivation lengths:")
+    for i, act in enumerate(activations):
+        print(f"Instance {i} shape: {act.shape}")
+        print(act)
 
-    
-# Load single word activations
-activations = load_single_word('word_activations.h5', '12')
 
-# Print information about each activation
-print("\nActivation lengths:")
-for i, act in enumerate(activations):
-    print(f"Instance {i} shape: {act.shape}")
-
-# If you want to see detailed information about the activations
-print_activation_info('word_activations.h5', '12')
-
-# Load all activations
-all_data = load_activations('word_activations.h5')
+    '''Load all activations'''
+    # all_data = load_activations('word_activations.h5')

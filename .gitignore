@@ -2,3 +2,4 @@ save_states/
 __pycache__/
 __pycache__
 customGPT-2/__pycache__
+word_activations.h5
