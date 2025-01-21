@@ -96,7 +96,7 @@ class MLP(nn.Module):
             # quit()
             print(processed_activations.shape)
 
-            activation_list.append(processed_activations)
+            # activation_list.append(processed_activations)
         x = self.c_proj(x)
         return x
 

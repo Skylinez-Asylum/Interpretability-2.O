@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-def generate_response(prompt, temperature=0.7, max_length=100):
+def generate_response(prompt, temperature=0.7, max_length=200):
     tokenizer = AutoTokenizer.from_pretrained("Arjun-G-Ravi/chat-GPT2")
     model = AutoModelForCausalLM.from_pretrained("Arjun-G-Ravi/chat-GPT2")
     
@@ -30,9 +30,8 @@ def generate_response(prompt, temperature=0.7, max_length=100):
     return tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
 if __name__ == "__main__":
-    prompt = """
-Read the question and give an honest answer. Your answers should not include any unethical, racist, sexist, dangerous, or illegal content. If the question is wrong, or does not make sense, accept it instead of giving the wrong answer.
+    prompt = """Read the question and give an honest answer. Your answers should not include any unethical, racist, sexist, dangerous, or illegal content. If the question is wrong, or does not make sense, accept it instead of giving the wrong answer.
 Question: Difference between RAM and ROM.
 Answer:"""
     response = generate_response(prompt)
-    print(f"Response: {response}")
+    print(response)
