@@ -12,16 +12,17 @@ config = {
     'dict_dim': 16384,
     'l1_coeff': 3e-4,
     'batch_size': 128,
-    'num_epochs': 200,
-    'lr': 1e-4,
+    'num_epochs': 500,
+    'lr': 5e-5,
     'gradient_clip_val': 1.0,  # Added gradient clipping
-    'checkpoint_frequency': 10  # Save every 10 epochs
+    'checkpoint_frequency': 10,  # Save every 10 epochs
+    'dropout_rate': 0.1,
+    'weight_decay': 1e-5,
+    'gradient_clip_val': 0.5
 }
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-# Create dataloaders
-dataset = SAE_Dataset(1000)
+dataset = SAE_Dataset(5000)
 train_size = int(0.8 * len(dataset))
 val_size = len(dataset) - train_size
 train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
@@ -35,12 +36,10 @@ val_dataloader = DataLoader(dataset=val_dataset,
                           shuffle=False, 
                           num_workers=0)
 
-# Initialize model, criterion, optimizer
 model = ReluAutoEncoder(cfg=config).to(device)
 criterion = nn.MSELoss()
 optimizer = optim.AdamW(model.parameters(), lr=config['lr'])
 
-# Training history
 history = {
     'train_loss': [],
     'val_loss': [],
@@ -57,9 +56,7 @@ def save_checkpoint(model, optimizer, epoch, loss, filename):
     }
     torch.save(checkpoint, filename)
 
-# Training loop
 for epoch in range(config['num_epochs']):
-    # Training phase
     model.train()
     running_loss = 0.0
     running_l1_loss = 0.0
@@ -68,27 +65,23 @@ for epoch in range(config['num_epochs']):
     for batch_idx, (x, _) in enumerate(train_dataloader):
         x = x.to(device)
         optimizer.zero_grad()
-        
-        # Forward pass
         loss, x_reconstruct, acts, l2_loss, l1_loss = model.forward(x)
-        
-        # Backward pass
         loss.backward()
         
-        # Remove parallel component of gradients
-        model.remove_parallel_component_of_grads()
+        # Remove parallel component of gradients and added 'model.normalize_decoder_weights()' after optimiser.step()
+        # model.remove_parallel_component_of_grads()
         
         # Gradient clipping
         torch.nn.utils.clip_grad_norm_(model.parameters(), config['gradient_clip_val'])
         
         optimizer.step()
+        model.normalize_decoder_weights()  # This is slowing the loss reduction, idk if it makes it more accurate
         
-        # Update running losses
+
         running_loss += loss.item()
         running_l1_loss += l1_loss.item()
         running_l2_loss += l2_loss.item()
         
-        # Resample dead neurons if needed
         model.resample_dead_neurons(optimizer, dataset)
     
     # Calculate average training losses
@@ -114,36 +107,38 @@ for epoch in range(config['num_epochs']):
     history['train_l1_loss'].append(avg_l1_loss)
     history['train_l2_loss'].append(avg_l2_loss)
     
-    # Print progress
-    print(f'Epoch: {epoch+1}/{config["num_epochs"]}')
-    print(f'Training Loss: {avg_train_loss:.6f} (L1: {avg_l1_loss:.6f}, L2: {avg_l2_loss:.6f})')
-    print(f'Validation Loss: {avg_val_loss:.6f}')
+    '''L1 loss suggest sparsity, L2 loss suggest how good the reconstruction is.'''
+
+    print(f'\nEpoch: {epoch+1}/{config["num_epochs"]} ||| Train Loss: {avg_train_loss:.6f} L1: {avg_l1_loss:.6f} L2: {avg_l2_loss:.6f} ||| Val Loss: {avg_val_loss:.6f}')
     
     # Save checkpoint
     # if (epoch + 1) % config['checkpoint_frequency'] == 0:
     #     save_checkpoint(model, optimizer, epoch, avg_train_loss, 
     #                    f'checkpoint_epoch_{epoch+1}.pt')
 
-# # Plot training history
-# plt.figure(figsize=(12, 4))
 
-# # Loss plot
-# plt.subplot(1, 2, 1)
-# plt.plot(history['train_loss'], label='Training Loss')
-# plt.plot(history['val_loss'], label='Validation Loss')
-# plt.xlabel('Epoch')
-# plt.ylabel('Total Loss')
-# plt.title('Training and Validation Loss')
-# plt.legend()
+def run_plot():
+    plt.figure(figsize=(12, 4))
 
-# # L1 vs L2 loss plot
-# plt.subplot(1, 2, 2)
-# plt.plot(history['train_l1_loss'], label='L1 Loss')
-# plt.plot(history['train_l2_loss'], label='L2 Loss')
-# plt.xlabel('Epoch')
-# plt.ylabel('Loss Component')
-# plt.title('L1 vs L2 Loss Components')
-# plt.legend()
+    # Loss plot
+    plt.subplot(1, 2, 1)
+    plt.plot(history['train_loss'], label='Training Loss')
+    plt.plot(history['val_loss'], label='Validation Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Total Loss')
+    plt.title('Training and Validation Loss')
+    plt.legend()
 
-# plt.tight_layout()
-# plt.show()
+    # L1 vs L2 loss plot
+    plt.subplot(1, 2, 2)
+    plt.plot(history['train_l1_loss'], label='L1 Loss')
+    plt.plot(history['train_l2_loss'], label='L2 Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss Component')
+    plt.title('L1 vs L2 Loss Components')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+# run_plot()
