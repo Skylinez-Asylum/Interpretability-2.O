@@ -39,7 +39,7 @@ def inference(model,inp:str,max_length:int = 50,num_return_sequences:int =1, ext
 
 
 if __name__ == '__main__':
-    torch.set_float32_matmul_precision('high')  # use tf32 <- felt this gives worse answers sometimes
+    torch.set_float32_matmul_precision('high')  # use tf32 <- the answers didnt seem much better
     path = r"customGPT-2/save_states/state_step555000.pt"
     print('Loading model...')
     model = load_model(path)
