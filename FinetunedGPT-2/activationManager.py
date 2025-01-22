@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 class ActivationManager:
-    def __init__(self, storage_path: str = 'activations.pkl'):
+    def __init__(self, storage_path: str = 'activations/activations.pkl'):
         self.storage_path = Path(storage_path)
         self.activations: Dict[str, List[np.ndarray]] = self._load_activations()
     
@@ -90,5 +90,5 @@ if __name__ == "__main__":
     stats = manager.get_stats(show_vocabulary=True)
     print(f"Stats: {stats}")
 
-    dog_activations = manager.get_activations('dog')
+    dog_activations = manager.get_activations('is')
     print('Dog shape:', dog_activations[0].shape)
