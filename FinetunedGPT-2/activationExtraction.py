@@ -96,8 +96,8 @@ def process_prompts_and_save_activations(
     activation_manager: ActivationManager,
     category: str = None,
     model_name: str = "Arjun-G-Ravi/chat-GPT2",
-    temperature: float = 0.7,
-    max_length: int = 200
+    temperature: float = 0.5,
+    max_length: int = 150
 ) -> Dict[str, str]:
     """
     Process a list of prompts, generate responses, and save token-by-token activations.
@@ -132,7 +132,9 @@ Question: Difference between RAM and ROM.
 Answer:""", 
 
 """Read the question and give an honest answer. Your answers should not include any unethical, racist, sexist, dangerous, or illegal content. If the question is wrong, or does not make sense, accept it instead of giving the wrong answer.
-Question:What is a banana?"""
+Question:What is a banana?""",
+
+'I am batman',
     ]
     
     # Process the prompts and save their activations
