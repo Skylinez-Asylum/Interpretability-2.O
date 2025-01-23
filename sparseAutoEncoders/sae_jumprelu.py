@@ -63,63 +63,6 @@ class JumpReluAutoEncoder(nn.Module):
         loss = l2_loss + l1_loss
         
         return loss, x_reconstruct, acts, l2_loss, l1_loss
-    
-    # couldnt get resampling neurons to work with jumprelu
-    def resample_dead_neurons(self, optimizer, dataset):
-        # Check more frequently for dead neurons
-        if self.step_counter < 10000 or self.step_counter % 5000 != 0:
-            return
-
-        dead_threshold = 0.01  # Consider neurons dead if activity is very low
-        normalized_activity = self.neuron_activity / self.step_counter
-        dead_neurons = (normalized_activity < dead_threshold).nonzero(as_tuple=True)[0]
-
-        if len(dead_neurons) == 0:
-            return
-
-        # Use more data points for resampling
-        subset_size = min(len(dataset), 1000000)
-        subset = random.sample(dataset, subset_size)
-        
-        # Compute reconstruction error for each sample
-        errors = []
-        with torch.no_grad():
-            for input_data in subset:
-                _, x_reconstruct, _, _, _ = self.forward(input_data.unsqueeze(0))
-                error = (x_reconstruct - input_data).pow(2).sum()
-                errors.append(error.item())
-
-        # Sample from points with high reconstruction error
-        probs = torch.tensor(errors)
-        probs = probs / probs.sum()
-
-        for neuron_idx in dead_neurons:
-            # Sample multiple inputs and use their average
-            num_samples = 5
-            selected_indices = torch.multinomial(probs, num_samples)
-            selected_inputs = torch.stack([subset[idx] for idx in selected_indices])
-            input_vector = selected_inputs.mean(0)
-
-            # Update dictionary element
-            self.W_dec.data[neuron_idx] = F.normalize(input_vector, dim=0)
-
-            # Update encoder weights with noise for exploration
-            avg_norm = self.W_enc.data.norm(dim=0).mean().item()
-            noise = torch.randn_like(input_vector) * 0.1
-            self.W_enc.data[:, neuron_idx] = F.normalize(input_vector + noise, dim=0) * avg_norm
-
-            # Reset optimizer state
-            for param in [self.W_enc, self.W_dec, self.b_enc]:
-                if param in optimizer.state:
-                    for key in optimizer.state[param]:
-                        if torch.is_tensor(optimizer.state[param][key]):
-                            if key == 'exp_avg':
-                                optimizer.state[param][key].zero_()
-                            elif key == 'exp_avg_sq':
-                                optimizer.state[param][key].fill_(optimizer.defaults['eps'])
-
-        self.neuron_activity.zero_()
-        self.step_counter = 0
 
     @torch.no_grad()
     def normalize_decoder_weights(self):

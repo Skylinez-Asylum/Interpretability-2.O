@@ -83,12 +83,6 @@ def train_topk_sae(config):
             # Optimizer step
             optimizer.step()
             
-            # Normalize decoder weights
-            # model.normalize_decoder_weights()
-            
-            # Attempt to resample dead neurons
-            # model.resample_dead_neurons(optimizer, train_dataset)
-            
             running_loss += loss.item()
             running_l2_loss += l2_loss.item()
             running_l1_loss += l1_loss.item()
@@ -187,4 +181,4 @@ config = {
 model, history = train_topk_sae(config)
 
 # Optionally plot training history
-plot_training_history(history)
+# plot_training_history(history)

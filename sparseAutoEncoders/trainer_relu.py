@@ -93,8 +93,6 @@ for epoch in range(config['num_epochs']):
         running_l1_loss += l1_loss.item()
         running_l2_loss += l2_loss.item()
         
-        model.resample_dead_neurons(optimizer, dataset)
-    
     # Calculate average training losses
     avg_train_loss = running_loss / len(train_dataloader)
     avg_l1_loss = running_l1_loss / len(train_dataloader)

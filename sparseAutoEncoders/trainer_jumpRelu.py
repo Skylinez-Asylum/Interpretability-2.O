@@ -52,8 +52,6 @@ def save_checkpoint(model, optimizer, epoch, loss, filename):
     torch.save(checkpoint, filename)
 
 
-# Training loop
-
 for epoch in range(config['num_epochs']):
     model.train()
     running_loss = 0.0
@@ -63,33 +61,21 @@ for epoch in range(config['num_epochs']):
     for batch_idx, (x, _) in enumerate(train_dataloader):
         x = x.to(device)
         optimizer.zero_grad()
-        
-        # Forward pass
         loss, x_reconstruct, acts, l2_loss, l1_loss = model(x)
-        
-        # Backward pass
         loss.backward()
-        
-        # Gradient clipping
         torch.nn.utils.clip_grad_norm_(model.parameters(), config['gradient_clip_val'])
         
-        # Update weights
         optimizer.step()
         scheduler.step()
 
-
-
-        # Update running losses
         running_loss += loss.item()
         running_l1_loss += l1_loss.item()
         running_l2_loss += l2_loss.item()
     
-    # Calculate average training losses
     avg_train_loss = running_loss / len(train_dataloader)
     avg_l1_loss = running_l1_loss / len(train_dataloader)
     avg_l2_loss = running_l2_loss / len(train_dataloader)
     
-    # Validation phase
     model.eval()
     val_running_loss = 0.0
     with torch.no_grad():
@@ -100,7 +86,6 @@ for epoch in range(config['num_epochs']):
     
     avg_val_loss = val_running_loss / len(val_dataloader)
     
-    # Update history
     history['train_loss'].append(avg_train_loss)
     history['val_loss'].append(avg_val_loss)
     history['train_l1_loss'].append(avg_l1_loss)
