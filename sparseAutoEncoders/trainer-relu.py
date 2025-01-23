@@ -12,8 +12,8 @@ config = {
     'dict_dim': 16384,
     'l1_coeff': 3e-4,
     'batch_size': 128,
-    'num_epochs': 500,
-    'lr': 5e-5,
+    'num_epochs': 400,
+    'lr': 5e-4,
     'gradient_clip_val': 1.0,  # Added gradient clipping
     'checkpoint_frequency': 10,  # Save every 10 epochs
     'dropout_rate': 0.1,
@@ -39,6 +39,17 @@ val_dataloader = DataLoader(dataset=val_dataset,
 model = ReluAutoEncoder(cfg=config).to(device)
 criterion = nn.MSELoss()
 optimizer = optim.AdamW(model.parameters(), lr=config['lr'])
+
+# After optimizer definition
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+    optimizer, 
+    T_max=config['num_epochs'], 
+    eta_min=config['lr']/100
+)
+
+# Inside epoch loop, after optimizer.step()
+scheduler.step()
+
 
 history = {
     'train_loss': [],
@@ -73,8 +84,8 @@ for epoch in range(config['num_epochs']):
         
         # Gradient clipping
         torch.nn.utils.clip_grad_norm_(model.parameters(), config['gradient_clip_val'])
-        
         optimizer.step()
+        scheduler.step() # This this gives better results on longer runs
         model.normalize_decoder_weights()  # This is slowing the loss reduction, idk if it makes it more accurate
         
 
@@ -109,7 +120,7 @@ for epoch in range(config['num_epochs']):
     
     '''L1 loss suggest sparsity, L2 loss suggest how good the reconstruction is.'''
 
-    print(f'\nEpoch: {epoch+1}/{config["num_epochs"]} ||| Train Loss: {avg_train_loss:.6f} L1: {avg_l1_loss:.6f} L2: {avg_l2_loss:.6f} ||| Val Loss: {avg_val_loss:.6f}')
+    print(f'Epoch: {epoch+1}/{config["num_epochs"]} ||| Train Loss: {avg_train_loss:.6f} L1: {avg_l1_loss:.6f} L2: {avg_l2_loss:.6f} ||| Val Loss: {avg_val_loss:.6f}')
     
     # Save checkpoint
     # if (epoch + 1) % config['checkpoint_frequency'] == 0:

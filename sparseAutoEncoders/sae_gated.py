@@ -60,8 +60,3 @@ class GatedAutoEncoder(nn.Module):
         l1_loss = self.l1_coeff * (acts.float().abs().sum())
         loss = l2_loss + l1_loss
         return loss, x_reconstruct, acts, l2_loss,l1_loss
-
-if __name__ == '__main__':
-    sae = GatedAutoEncoder(cfg=config)
-    d = sae(torch.ones([config['activation_dim']]))
-    print()

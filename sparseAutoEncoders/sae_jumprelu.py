@@ -11,8 +11,6 @@ config = {
     'lr':1e-4
 }
 
-
-
 class JumpReluAutoEncoder(nn.Module):
 
     def __init__(self,cfg):
