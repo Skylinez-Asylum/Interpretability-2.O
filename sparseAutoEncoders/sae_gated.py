@@ -40,23 +40,23 @@ class GatedAutoEncoder(nn.Module):
 
 
     def encode(self, x):
-        x_enc = x @ self.W_enc + self.b_enc
+        x_enc = x @ self.W_enc + self.b_enc # a simple linear regression 
         
-        pi_gate = x_enc + self.gate_bias
+        pi_gate = x_enc + self.gate_bias # Gating Network
         f_gate = (pi_gate > 0).to(x_enc.dtype)
         
-        pi_mag = self.r_mag.exp() * x_enc + self.mag_bias
+        pi_mag = self.r_mag.exp() * x_enc + self.mag_bias # Magnitude Network
         f_mag = F.relu(pi_mag)
         
         acts = f_gate * f_mag
-        acts = acts * self.W_dec.norm(dim=1)
+        acts = acts * self.W_dec.norm(dim=1) # Anthropic team was smoking
         
         return acts
 
     def decode(self, f):
         
         norm = self.W_dec.norm(dim=1, keepdim=True).t() 
-        f = f / norm 
+        f = f / norm # Anthropic team was smoking
         return f @ self.W_dec + self.b_dec
 
 

@@ -45,13 +45,12 @@ class ReluAutoEncoder(nn.Module):
         if self.training:
             acts = self.dropout(acts)
             
+        
         x_reconstruct = acts @ self.W_dec + self.b_dec
         
         # Calculate losses
-        # l2_loss = (x_reconstruct.float() - x.float()).pow(2).sum(-1).mean(0)
-        l2_loss = F.mse_loss(x_reconstruct, x, reduction='mean')
-
         l1_loss = self.l1_coeff * acts.float().abs().sum()
+        l2_loss = F.mse_loss(x_reconstruct, x, reduction='mean')
         
         # Add L2 regularization
         weight_decay_loss = self.weight_decay * (
