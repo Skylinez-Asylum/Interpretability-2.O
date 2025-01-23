@@ -15,6 +15,9 @@ config = {
     'gradient_clip_val': 1.0,
     'checkpoint_frequency': 10,
     'weight_decay': 1e-5,
+    'gradient_clip_val': 1.0,
+    'checkpoint_steps': 1000,
+    'resample_freq': 500,
 }
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -39,10 +42,18 @@ history = {
     'train_l2_loss': [],
 }
 
-
+def save_checkpoint(model, optimizer, epoch, loss, filename):
+    checkpoint = {
+        'epoch': epoch,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'loss': loss,
+    }
+    torch.save(checkpoint, filename)
 
 
 # Training loop
+
 for epoch in range(config['num_epochs']):
     model.train()
     running_loss = 0.0
@@ -65,7 +76,9 @@ for epoch in range(config['num_epochs']):
         # Update weights
         optimizer.step()
         scheduler.step()
-        
+
+
+
         # Update running losses
         running_loss += loss.item()
         running_l1_loss += l1_loss.item()
@@ -94,6 +107,12 @@ for epoch in range(config['num_epochs']):
     history['train_l2_loss'].append(avg_l2_loss)
     
     print(f'Epoch: {epoch+1}/{config["num_epochs"]} ||| Train Loss: {avg_train_loss:.6f} L1: {avg_l1_loss:.6f} L2: {avg_l2_loss:.6f} ||| Val Loss: {avg_val_loss:.6f}')
+
+    # Save checkpoint
+    # if (epoch + 1) % config['checkpoint_frequency'] == 0:
+    #     save_checkpoint(model, optimizer, epoch, avg_train_loss, 
+    #                    f'checkpoint_epoch_{epoch+1}.pt')
+
 
 # Plotting function
 def run_plot():
