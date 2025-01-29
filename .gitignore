@@ -4,3 +4,4 @@ __pycache__
 customGPT-2/__pycache__
 word_activations.h5
 activations/
+.env
