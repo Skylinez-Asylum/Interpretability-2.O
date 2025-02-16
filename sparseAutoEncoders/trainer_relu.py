@@ -81,6 +81,8 @@ for epoch in range(config['num_epochs']):
         
         # Remove parallel component of gradients and added 'model.normalize_decoder_weights()' after optimiser.step()
         # model.remove_parallel_component_of_grads()
+
+        model.resample_dead_neurons(optimizer, train_dataset)
         
         # Gradient clipping
         torch.nn.utils.clip_grad_norm_(model.parameters(), config['gradient_clip_val'])
