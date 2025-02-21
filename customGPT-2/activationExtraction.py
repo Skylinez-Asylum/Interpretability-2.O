@@ -33,14 +33,18 @@ class ActivationExtractor:
         self,
         prompt: str,
         max_length: int = 50,
-        num_return_sequences: int = 1
+        num_return_sequences: int = 1,
+        batch_size=10,
     ) -> Tuple[List[str], List[np.ndarray], List[str]]:
         self.model.eval()
         self.setup_hook()
         
         tokens = self.tokenizer.encode(prompt)
         tokens = torch.tensor(tokens, dtype=torch.long, device='cuda')
-        tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1)
+        # tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1)
+        tokens = tokens.unsqueeze(0).repeat(batch_size, 1)
+
+
         x = tokens
         
         all_activations = []
@@ -95,7 +99,8 @@ def process_prompts_and_save_activations(
         generated_texts, activations, tokens = extractor.generate_and_extract(
             prompt,
             max_length=max_length,
-            num_return_sequences=num_sequences
+            num_return_sequences=num_sequences,
+            batch_size=10
         )
         
         # Save activations for each token

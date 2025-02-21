@@ -97,7 +97,7 @@ def process_prompts_and_save_activations(
     category: str = None,
     model_name: str = "Arjun-G-Ravi/chat-GPT2",
     temperature: float = 0.5,
-    max_length: int = 150
+    max_length: int = 100
 ) -> Dict[str, str]:
     """
     Process a list of prompts, generate responses, and save token-by-token activations.
@@ -105,7 +105,8 @@ def process_prompts_and_save_activations(
     extractor = ActivationExtractor(model_name)
     responses = {}
     
-    for prompt in prompts:
+    for i, prompt in enumerate(prompts):
+        print(f'{i}/{len(prompts)}: {prompt}')
         # Generate text and extract activations for each token
         generated_text, activations, tokens = extractor.generate_and_extract(
             prompt,
@@ -125,17 +126,15 @@ def process_prompts_and_save_activations(
 if __name__ == "__main__":
     # Example usage
     manager = ActivationManager("activations/GPT2FT/activations.pkl")
+    print(torch.cuda.is_available())
     
-    prompts = [
-"""Read the question and give an honest answer. Your answers should not include any unethical, racist, sexist, dangerous, or illegal content. If the question is wrong, or does not make sense, accept it instead of giving the wrong answer.
-Question: Difference between RAM and ROM.
-Answer:""", 
-
-"""Read the question and give an honest answer. Your answers should not include any unethical, racist, sexist, dangerous, or illegal content. If the question is wrong, or does not make sense, accept it instead of giving the wrong answer.
-Question:What is a banana?""",
-
-'I am batman',
-    ]
+    with open('activationDataset.txt', 'r') as f:
+        text = f.read()
+    if not text:
+        print('text not found')
+        quit()
+ 
+    prompts = list(text.split('\n'))[:25]
     
     # Process the prompts and save their activations
     responses = process_prompts_and_save_activations(
@@ -144,8 +143,8 @@ Question:What is a banana?""",
     )
     
     # Print the generated responses
-    for prompt, response in responses.items():
-        print(f"\nPrompt: {prompt}\nResponse: {response}\n")
+    # for prompt, response in responses.items():
+    #     print(f"\nPrompt: {prompt}\nResponse: {response}\n")
         
     # Display stats
     stats = manager.get_stats(show_vocabulary=True)
