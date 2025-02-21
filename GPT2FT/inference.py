@@ -31,7 +31,7 @@ def generate_response(prompt, temperature=0.7, max_length=200):
 
 if __name__ == "__main__":
     prompt = """Read the question and give an honest answer. Your answers should not include any unethical, racist, sexist, dangerous, or illegal content. If the question is wrong, or does not make sense, accept it instead of giving the wrong answer.
-Question: Difference between RAM and ROM.
+Question: Who is Bruce Wayne?
 Answer:"""
     response = generate_response(prompt)
     print(response)

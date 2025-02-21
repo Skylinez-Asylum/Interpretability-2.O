@@ -144,7 +144,7 @@ def load_model(checkpoint_path):
 
 if __name__ == '__main__':
     import torchinfo
-    path = r"customGPT-2/save_states/state_step555000.pt"
+    path = r"customGPT2/save_states/state_step555000.pt"
     print('Loading model...')
     model = load_model(path)
     # print(model)
