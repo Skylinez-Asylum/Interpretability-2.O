@@ -36,7 +36,7 @@ class ActivationManager:
         
         # Now we can safely append to the list
         self.activations[category].append(activation)
-        self._save_activations()
+        # self._save_activations()
     
     def add_activations_batch(
         self,
@@ -49,7 +49,7 @@ class ActivationManager:
         
         # Extend the list with the batch of activations
         self.activations[category].extend(activations)
-        self._save_activations()
+        # self._save_activations()
     
     def get_activations(self, category: str) -> Optional[List[np.ndarray]]:
         return self.activations.get(category, [])

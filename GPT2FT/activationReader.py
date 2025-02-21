@@ -8,4 +8,6 @@ print(f"Activation stats: {stats}")
 print('---')
 
 act = manager.get_activations(' is')
-print(len(act), act[10].shape)
+print(len(act))
+print(act[0].shape)
+
