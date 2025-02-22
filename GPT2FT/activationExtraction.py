@@ -119,3 +119,13 @@ if __name__ == "__main__":
     if not text:
         print('text not found')
         quit()
+    prompts = text.split('\n')
+    
+    responses = process_prompts_and_save_activations(
+        prompts,
+        manager,
+        batch_size=24
+    )
+    
+    stats = manager.get_stats(show_vocabulary=True)
+    print(f"Stats after processing: {stats}")
