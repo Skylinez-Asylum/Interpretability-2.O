@@ -2,17 +2,51 @@ import torch
 import numpy as np
 from tqdm import trange
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from typing import List, Tuple, Dict
-from activationManager import ActivationManager
+from typing import List, Dict
+import pickle
+from pathlib import Path
 
-
-
+# Define ActivationManager inline to ensure compatibility
+class ActivationManager:
+    def __init__(self, storage_path: str = 'activations/GPT2/activations.pkl'):
+        self.storage_path = Path(storage_path)
+        self.activations: Dict[str, List[np.ndarray]] = self._load_activations()
+    
+    def _load_activations(self) -> Dict[str, List[np.ndarray]]:
+        if self.storage_path.exists():
+            try:
+                with open(self.storage_path, 'rb') as f:
+                    loaded_data = pickle.load(f)
+                    # Ensure each category has a list of activations
+                    return {category: list(acts) if not isinstance(acts, list) else acts 
+                            for category, acts in loaded_data.items()}
+            except Exception as e:
+                print(f"Error loading activations: {e}")
+                return {}
+        return {}
+    
+    def _save_activations(self) -> None:
+        with open(self.storage_path, 'wb') as f:
+            pickle.dump(self.activations, f)
+    
+    def add_activation(self, activation: np.ndarray, category: str) -> None:
+        if category not in self.activations:
+            self.activations[category] = []
+        self.activations[category].append(activation)
+    
+    def get_activations(self, category: str) -> List[np.ndarray]:
+        return self.activations.get(category, [])
+    
+    def get_stats(self, show_vocabulary: bool = False) -> Dict:
+        total_count = sum(len(acts) for acts in self.activations.values())
+        if show_vocabulary:
+            return {"total": total_count, "Vocabulary": {k: len(v) for k, v in self.activations.items()}}
+        return {"total": total_count}
 
 class ActivationExtractor:
     def __init__(self, model_name: str = "gpt2", device: str = "cuda", batch_size: int = 8):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        # Set the padding token to the EOS token
-        self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer.pad_token = self.tokenizer.eos_token  # Set padding token
         self.model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
         self.device = device
         self.batch_size = batch_size
@@ -24,11 +58,12 @@ class ActivationExtractor:
         self.hook_handle = None
     
     def _activation_hook(self, module, input, output):
-        self.activation = output.detach().cpu().numpy()
+        # Optimize by only transferring the last token's activation
+        self.activation = output[:, -1, :].detach().cpu().numpy()
     
     def setup_hook(self):
         last_block = self.model.module.transformer.h[-1] if isinstance(self.model, torch.nn.DataParallel) else self.model.transformer.h[-1]
-        mlp = last_block.mlp.c_proj  # Final projection layer of MLP
+        mlp = last_block.mlp.c_proj
         self.hook_handle = mlp.register_forward_hook(self._activation_hook)
     
     def remove_hook(self):
@@ -41,11 +76,10 @@ class ActivationExtractor:
         prompts: List[str],
         temperature: float = 0.7,
         max_length: int = 200
-        ):
-        '''This is the main function. This one generates text from the model, and returns activations. This only takes activation of newly generated tokens.'''
-
+    ):
+        '''Generates text and extracts activations for newly generated tokens.'''
         self.setup_hook()
-        encoding = self.tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=max_length, add_special_tokens=True).to(self.device)  
+        encoding = self.tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=max_length, add_special_tokens=True).to(self.device)
         
         input_ids = encoding.input_ids
         attention_mask = encoding.attention_mask
@@ -67,11 +101,11 @@ class ActivationExtractor:
                     next_tokens = torch.argmax(next_token_logits, dim=-1, keepdim=True)
                 
                 for i in range(batch_size):
-                    token_activation = self.activation[i, -1]  
+                    token_activation = self.activation[i]  # Shape: (hidden_size,)
                     batch_activations[i].append(token_activation)
                     token_text = self.tokenizer.decode(next_tokens[i])
                     batch_tokens[i].append(token_text)
-                    # generated_texts[i] += token_text # commented to save time
+                    # generated_texts[i] += token_text  # Remains commented out
                 
                 input_ids = torch.cat([input_ids, next_tokens], dim=1)
                 attention_mask = torch.cat([attention_mask, torch.ones((batch_size, 1), dtype=torch.long, device=self.device)], dim=1)
@@ -81,7 +115,6 @@ class ActivationExtractor:
         
         self.remove_hook()
         return generated_texts, batch_activations, batch_tokens
-    
 
 def process_prompts_and_save_activations(
     prompts: List[str],
@@ -89,9 +122,9 @@ def process_prompts_and_save_activations(
     model_name: str = "gpt2",
     temperature: float = 0.5,
     max_length: int = 200,
-    batch_size: int = 24 # default
+    batch_size: int = 24
 ) -> Dict[str, str]:
-    extractor = ActivationExtractor(model_name, batch_size=batch_size)
+    extractor = ActivationExtractor(model_name, device="cuda", batch_size=batch_size)
     responses = {}
 
     for i in trange(0, len(prompts), batch_size):
@@ -106,11 +139,12 @@ def process_prompts_and_save_activations(
         for j, prompt in enumerate(batch_prompts):
             for activation, token in zip(activations[j], tokens[j]):
                 activation_manager.add_activation(activation, token)
-                activation_manager._save_activations()
             responses[prompt] = generated_texts[j]
-    
-    return responses
+        
+        # Save after each batch to optimize I/O and memory usage
+        activation_manager._save_activations()
 
+    return responses
 
 if __name__ == "__main__":
     manager = ActivationManager("activations/GPT2/activations.pkl")
