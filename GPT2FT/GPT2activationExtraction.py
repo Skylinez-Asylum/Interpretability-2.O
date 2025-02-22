@@ -6,9 +6,13 @@ from typing import List, Tuple, Dict
 from activationManager import ActivationManager
 
 
+
+
 class ActivationExtractor:
-    def __init__(self, model_name: str = "Arjun-G-Ravi/chat-GPT2", device: str = "cuda", batch_size: int = 8):
+    def __init__(self, model_name: str = "gpt2", device: str = "cuda", batch_size: int = 8):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        # Set the padding token to the EOS token
+        self.tokenizer.pad_token = self.tokenizer.eos_token
         self.model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
         self.device = device
         self.batch_size = batch_size
@@ -41,7 +45,7 @@ class ActivationExtractor:
         '''This is the main function. This one generates text from the model, and returns activations. This only takes activation of newly generated tokens.'''
 
         self.setup_hook()
-        encoding = self.tokenizer( prompts, return_tensors="pt", padding=True, truncation=True, max_length=max_length, add_special_tokens=True).to(self.device)  
+        encoding = self.tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=max_length, add_special_tokens=True).to(self.device)  
         
         input_ids = encoding.input_ids
         attention_mask = encoding.attention_mask
@@ -77,12 +81,12 @@ class ActivationExtractor:
         
         self.remove_hook()
         return generated_texts, batch_activations, batch_tokens
-
+    
 
 def process_prompts_and_save_activations(
     prompts: List[str],
     activation_manager: ActivationManager,
-    model_name: str = "Arjun-G-Ravi/chat-GPT2",
+    model_name: str = "gpt2",
     temperature: float = 0.5,
     max_length: int = 200,
     batch_size: int = 24 # default
@@ -109,7 +113,7 @@ def process_prompts_and_save_activations(
 
 
 if __name__ == "__main__":
-    manager = ActivationManager("activations/GPT2FT/activations.pkl")
+    manager = ActivationManager("activations/GPT2/activations.pkl")
     print('GPU available:', torch.cuda.is_available())
     
     with open('activationDataset.txt', 'r') as f:
