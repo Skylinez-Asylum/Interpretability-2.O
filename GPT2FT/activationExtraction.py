@@ -88,6 +88,7 @@ def process_prompts_and_save_activations(
     max_length: int = 200,
     batch_size: int = 24
 ) -> Dict[str, str]:
+    
     extractor = ActivationExtractor(model_name, device="cuda", batch_size=batch_size)
     responses = {}
 
