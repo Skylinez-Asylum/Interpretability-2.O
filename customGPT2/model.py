@@ -134,11 +134,11 @@ class GPT(nn.Module):
 def remove_prefix(state_dict, prefix):
     return {k[len(prefix):] if k.startswith(prefix) else k: v for k, v in state_dict.items()}
 
-def load_model(checkpoint_path):
+def load_model(checkpoint_path, config = GPTConfig):
     checkpoint = torch.load(checkpoint_path, map_location='cuda', weights_only=True)
     model_state_dict = checkpoint['model']
     model_state_dict = remove_prefix(model_state_dict, "_orig_mod.")
-    new_model = GPT(GPTConfig)  
+    new_model = GPT(config)  
     new_model.load_state_dict(model_state_dict)
     return new_model
 

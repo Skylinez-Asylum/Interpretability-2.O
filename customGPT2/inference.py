@@ -40,14 +40,32 @@ def inference(model,inp:str,max_length:int = 50,num_return_sequences:int =1, ext
 
 if __name__ == '__main__':
     torch.set_float32_matmul_precision('high')  # use tf32 <- the answers didnt seem much better
-    path = r"customGPT-2/save_states/state_step555000.pt"
     print('Loading model...')
-    model = load_model(path)
+
+    model_id = 1
+    if model_id == 1: # Best non fine tuned model with 6 attention heads
+        path = r"customGPT2/save_states/6headNFT555k.pt"
+    elif model_id == 2: # Best Fine tuned model with 6 attention heads
+        path = r"customGPT2/save_states/6headFT50k.pt"
+    elif model_id == 3:# Best non fine tuned model with 12 attention heads
+        path = r"customGPT2/save_states/12headNFT900k.pt"
+        from dataclasses import dataclass
+
+        @dataclass
+        class GPTConfig:
+                block_size:int = 1024
+                vocab_size:int = 50304
+                n_layer:int   = 12
+                n_head:int = 12
+                n_embd:int = 768
+        model = load_model(path, GPTConfig)
+
+
+
+    if model_id != 3: model = load_model(path)
     model.to('cuda')
-    print('Model loaded\n\n')
-    inp= "My name is "
-
-
+    ('Model loaded\n\n')
+    inp= "Q: who is john Wick? A: "
     out = inference(model,inp,30,10)
     for i in out:
         print(i, '\n')

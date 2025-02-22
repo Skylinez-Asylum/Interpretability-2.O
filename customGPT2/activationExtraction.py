@@ -113,7 +113,7 @@ def process_prompts_and_save_activations(
 
 if __name__ == "__main__":
     torch.set_float32_matmul_precision('high')
-    path = r"customGPT-2/save_states/state_step555000.pt"
+    path = r"customGPT2/save_states/state_step555000.pt"
     
     # Initialize activation manager
     manager = ActivationManager("activations/CustomGPT2/activations.pkl")
