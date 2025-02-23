@@ -36,7 +36,7 @@ class ReluAutoEncoder(nn.Module):
         
         # Add noise during training for better generalization
         if self.training:
-            x_cent = x_cent + torch.randn_like(x_cent) * 0.03
+            x_cent = x_cent + torch.randn_like(x_cent) * 0.01
             
         pre_acts = x_cent @ self.W_enc + self.b_enc
         acts = F.relu(pre_acts)

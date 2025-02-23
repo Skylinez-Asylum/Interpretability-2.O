@@ -5,19 +5,19 @@ import torch.optim as optim
 from sae_relu import ReluAutoEncoder
 from sae_dataset import SAE_Dataset
 from torch.utils.data import Dataset, DataLoader
-import os
 
 config = {
     'activation_dim': 768,
     'dict_dim': 16384, 
-    'l1_coeff': 3e-4,# A high val over-sparsify, losing important features,low might allow polysemantic features. Adjust.
+    'l1_coeff': 1e-7,# A high val over-sparsify, losing important features,low might allow polysemantic features. Adjust.
     'batch_size': 51200, # 51200 takes around 21GB
     'num_epochs': 400,
-    'lr': 5e-4,
+    'lr': 5e-5,
     'checkpoint_frequency': 100, 
     'dropout_rate': 0.1,
     'weight_decay': 1e-5,
-    'gradient_clip_val':20
+    'gradient_clip_val':20,
+    'resampling_frequency':30,
 }
 
 device = torch.device('cuda')
@@ -75,10 +75,8 @@ for epoch in range(config['num_epochs']):
         loss, x_reconstruct, acts, l2_loss, l1_loss = model.forward(x)
         loss.backward()
         
-        # Remove parallel component of gradients and added 'model.normalize_decoder_weights()' after optimiser.step()
         # model.remove_parallel_component_of_grads()
 
-        
         # Gradient clipping
         torch.nn.utils.clip_grad_norm_(model.parameters(), config['gradient_clip_val'])
         optimizer.step()
@@ -90,7 +88,7 @@ for epoch in range(config['num_epochs']):
     model.normalize_decoder_weights() 
     
     scheduler.step()
-    if epoch%250 == 0 and epoch!=0: model.resample_dead_neurons(optimizer, train_dataset)
+    if epoch%config['resampling_frequency'] == 0 and epoch!=0: model.resample_dead_neurons(optimizer, train_dataset)
         
     # Calculate average training losses
     avg_train_loss = running_loss / len(train_dataloader)
@@ -120,9 +118,8 @@ for epoch in range(config['num_epochs']):
     print(f'Epoch: {epoch+1}/{config["num_epochs"]} ||| Train Loss: {avg_train_loss:.6f} L1: {avg_l1_loss:.6f} L2: {avg_l2_loss:.6f} ||| Val Loss: {avg_val_loss:.6f}')
     
     # Save checkpoint
-    # if (epoch + 1) % config['checkpoint_frequency'] == 0:
-    #     save_checkpoint(model, optimizer, epoch, avg_train_loss, 
-    #                    f'checkpoint_epoch_{epoch+1}.pt')
+    if (epoch + 1) % config['checkpoint_frequency'] == 0:
+        save_checkpoint(model, optimizer, epoch, avg_train_loss, f'sparseAutoEncoders/save_states/checkpoint_epoch_{epoch+1}.pt')
 
 
 def run_plot():

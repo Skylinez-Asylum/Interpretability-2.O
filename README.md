@@ -3,6 +3,7 @@
 - [ ] 6 layer FT
 
 # TODO
+- [ ] Fine tune GPT-2
 - [ ] Take activation
   - [ ] 12 attention
   - [ ] GPT-2
