@@ -9,16 +9,15 @@ import os
 
 config = {
     'activation_dim': 768,
-    'dict_dim': 16384,
+    'dict_dim': 16384, 
     'l1_coeff': 3e-4,
-    'batch_size': 128,
+    'batch_size': 51200, # 51200 takes around 21GB
     'num_epochs': 400,
     'lr': 5e-4,
-    'gradient_clip_val': 1.0,  # Added gradient clipping
-    'checkpoint_frequency': 10,  # Save every 10 epochs
+    'checkpoint_frequency': 100, 
     'dropout_rate': 0.1,
     'weight_decay': 1e-5,
-    'gradient_clip_val': 0.5
+    'gradient_clip_val':20
 }
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -46,9 +45,6 @@ scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
     T_max=config['num_epochs'], 
     eta_min=config['lr']/100
 )
-
-# Inside epoch loop, after optimizer.step()
-scheduler.step()
 
 
 history = {
@@ -86,15 +82,15 @@ for epoch in range(config['num_epochs']):
         # Gradient clipping
         torch.nn.utils.clip_grad_norm_(model.parameters(), config['gradient_clip_val'])
         optimizer.step()
-        scheduler.step() # This this gives better results on longer runs
-        model.normalize_decoder_weights()  # This is slowing the loss reduction, idk if it makes it more accurate
         
 
         running_loss += loss.item()
         running_l1_loss += l1_loss.item()
         running_l2_loss += l2_loss.item()
+    model.normalize_decoder_weights() 
     
-    if epoch%250 == 0: model.resample_dead_neurons(optimizer, train_dataset)
+    scheduler.step()
+    if epoch%250 == 0 and epoch!=0: model.resample_dead_neurons(optimizer, train_dataset)
         
     # Calculate average training losses
     avg_train_loss = running_loss / len(train_dataloader)
