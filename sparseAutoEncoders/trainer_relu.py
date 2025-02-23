@@ -22,7 +22,7 @@ config = {
 }
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-dataset = SAE_Dataset(5000)
+dataset = SAE_Dataset('/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2/GPT2activations.npy')
 train_size = int(0.8 * len(dataset))
 val_size = len(dataset) - train_size
 train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
@@ -82,7 +82,6 @@ for epoch in range(config['num_epochs']):
         # Remove parallel component of gradients and added 'model.normalize_decoder_weights()' after optimiser.step()
         # model.remove_parallel_component_of_grads()
 
-        model.resample_dead_neurons(optimizer, train_dataset)
         
         # Gradient clipping
         torch.nn.utils.clip_grad_norm_(model.parameters(), config['gradient_clip_val'])
@@ -94,6 +93,8 @@ for epoch in range(config['num_epochs']):
         running_loss += loss.item()
         running_l1_loss += l1_loss.item()
         running_l2_loss += l2_loss.item()
+    
+    if epoch%250 == 0: model.resample_dead_neurons(optimizer, train_dataset)
         
     # Calculate average training losses
     avg_train_loss = running_loss / len(train_dataloader)
@@ -152,4 +153,4 @@ def run_plot():
     plt.tight_layout()
     plt.show()
 
-# run_plot()
+run_plot()

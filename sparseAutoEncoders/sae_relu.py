@@ -69,12 +69,8 @@ class ReluAutoEncoder(nn.Module):
 
 
     def resample_dead_neurons(self, optimizer, dataset):
-        if self.step_counter % 100 != 0:
-            return
         print('resampling')
-        print(self.neuron_activity)
         self.neuron_activity = torch.zeros_like(self.neuron_activity)
-        print(self.neuron_activity)
     
         # Identify dead neurons
         dead_neurons = (self.neuron_activity == 0).nonzero(as_tuple=True)[0]
