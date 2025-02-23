@@ -10,7 +10,7 @@ import os
 config = {
     'activation_dim': 768,
     'dict_dim': 16384, 
-    'l1_coeff': 3e-4,
+    'l1_coeff': 3e-4,# A high val over-sparsify, losing important features,low might allow polysemantic features. Adjust.
     'batch_size': 51200, # 51200 takes around 21GB
     'num_epochs': 400,
     'lr': 5e-4,
@@ -20,7 +20,7 @@ config = {
     'gradient_clip_val':20
 }
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda')
 dataset = SAE_Dataset('/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2/GPT2activations.npy')
 train_size = int(0.8 * len(dataset))
 val_size = len(dataset) - train_size
@@ -29,11 +29,11 @@ train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size,
 train_dataloader = DataLoader(dataset=train_dataset, 
                             batch_size=config['batch_size'], 
                             shuffle=True, 
-                            num_workers=0)
+                            num_workers=4)
 val_dataloader = DataLoader(dataset=val_dataset, 
                           batch_size=config['batch_size'], 
                           shuffle=False, 
-                          num_workers=0)
+                          num_workers=4)
 
 model = ReluAutoEncoder(cfg=config).to(device)
 criterion = nn.MSELoss()
