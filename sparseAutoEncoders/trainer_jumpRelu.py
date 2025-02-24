@@ -7,21 +7,20 @@ from sae_jumprelu import JumpReluAutoEncoder
 
 config = {
     'activation_dim': 768,
-    'dict_dim': 16384,
-    'l1_coeff': 3e-4,
-    'batch_size': 128,
-    'num_epochs': 200,
+    'dict_dim': 16384*2,
+    'l1_coeff': 1e-6,
+    'batch_size': 51200//2,
+    'num_epochs': 500,
     'lr': 1e-4,
     'gradient_clip_val': 1.0,
-    'checkpoint_frequency': 10,
+    'checkpoint_frequency': 100,
     'weight_decay': 1e-5,
-    'gradient_clip_val': 1.0,
-    'checkpoint_steps': 1000,
-    'resample_freq': 500,
+    'gradient_clip_val': 2,
+    'resample_freq': 600,
 }
-
+version=4
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-dataset = SAE_Dataset(5000)
+dataset = SAE_Dataset('/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2/GPT2activations.npy')
 train_size = int(0.8 * len(dataset))
 val_size = len(dataset) - train_size
 train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
@@ -94,9 +93,9 @@ for epoch in range(config['num_epochs']):
     print(f'Epoch: {epoch+1}/{config["num_epochs"]} ||| Train Loss: {avg_train_loss:.6f} L1: {avg_l1_loss:.6f} L2: {avg_l2_loss:.6f} ||| Val Loss: {avg_val_loss:.6f}')
 
     # Save checkpoint
-    # if (epoch + 1) % config['checkpoint_frequency'] == 0:
-    #     save_checkpoint(model, optimizer, epoch, avg_train_loss, 
-    #                    f'checkpoint_epoch_{epoch+1}.pt')
+    if (epoch + 1) % config['checkpoint_frequency'] == 0:
+        save_checkpoint(model, optimizer, epoch, avg_train_loss, 
+                       f'checkpoint_epoch_{epoch+1}v{version}.pt')
 
 
 # Plotting function
@@ -125,4 +124,4 @@ def run_plot():
     plt.show()
 
 # Run the plot
-# run_plot()
+run_plot()

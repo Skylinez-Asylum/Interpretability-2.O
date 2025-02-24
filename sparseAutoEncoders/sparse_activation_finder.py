@@ -1,14 +1,15 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from sae_relu import ReluAutoEncoder
+# from sae_relu import ReluAutoEncoder
+from sae_jumprelu import JumpReluAutoEncoder
 import matplotlib.pyplot as plt
 import numpy as np
 
 # Configuration (same as your training setup)
 config = {
     'activation_dim': 768,
-    'dict_dim': 16384,
+    'dict_dim': 16384*2,
     'l1_coeff': 3e-4,
     'batch_size': 1280,
     'num_epochs': 400,
@@ -23,8 +24,8 @@ config = {
 device = torch.device('cuda')
 
 # Load the model
-model = ReluAutoEncoder(cfg=config).to(device)
-checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/checkpoint_epoch_400.pt'
+model = JumpReluAutoEncoder(cfg=config).to(device)
+checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/GPT2_jumprelu/checkpoint_epoch_500v3.pt'
 
 # Load checkpoint
 checkpoint = torch.load(checkpoint_path, map_location=device)
@@ -45,10 +46,10 @@ def get_active_neurons(activation, model, device='cuda'):
 def visualize_activation(acts, title):
     acts_np = acts.squeeze(0).cpu().numpy()  # Shape: [16384]
     grid_size = int(np.sqrt(config['dict_dim']))  # 128 for 16384 (128x128)
-    acts_2d = acts_np.reshape(grid_size, grid_size)  # Reshape to 128x128
+    acts_2d = acts_np.reshape(128, 128*2)  # Reshape to 128x128
 
     # Create a color map: green for positive, red for zero/negative
-    color_map = np.zeros((grid_size, grid_size, 3))  # RGB
+    color_map = np.zeros((128, 128*2, 3))  # RGB
     color_map[acts_2d > 0] = [0, 1, 0]  # Green for positive
     color_map[acts_2d == 0] = [1, 0, 0]  # Red for zero/negative
 
@@ -81,3 +82,5 @@ print("\nTop 20 Activations with Minimum Active Neurons:")
 for rank, (idx, num_active, acts) in enumerate(results_sorted, 1):
     print(f"Rank {rank}: Index {idx}, Active Neurons: {num_active}")
     visualize_activation(acts, f"Activation {idx} - {num_active} Active Neurons")
+
+# To future me: add the code to find the token whose activation caused this. 

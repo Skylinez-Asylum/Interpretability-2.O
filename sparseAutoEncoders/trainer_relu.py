@@ -8,16 +8,16 @@ from torch.utils.data import Dataset, DataLoader
 
 config = {
     'activation_dim': 768,
-    'dict_dim': 16384, 
-    'l1_coeff': 1e-7,# A high val over-sparsify, losing important features,low might allow polysemantic features. Adjust.
-    'batch_size': 51200, # 51200 takes around 21GB
+    'dict_dim': 16384*8, 
+    'l1_coeff': 1e-5,# 5e-6 was really good
+    'batch_size': 51200//10, # 51200 takes around 21GB @ 16384 dict dim
     'num_epochs': 400,
-    'lr': 5e-5,
+    'lr': 1e-4,
     'checkpoint_frequency': 100, 
     'dropout_rate': 0.1,
     'weight_decay': 1e-5,
-    'gradient_clip_val':20,
-    'resampling_frequency':30,
+    'gradient_clip_val':2,
+    'resampling_frequency':100,
 }
 
 device = torch.device('cuda')
@@ -119,7 +119,7 @@ for epoch in range(config['num_epochs']):
     
     # Save checkpoint
     if (epoch + 1) % config['checkpoint_frequency'] == 0:
-        save_checkpoint(model, optimizer, epoch, avg_train_loss, f'sparseAutoEncoders/save_states/checkpoint_epoch_{epoch+1}.pt')
+        save_checkpoint(model, optimizer, epoch, avg_train_loss, f'sparseAutoEncoders/save_states/reluGPT2v2_epoch_{epoch+1}.pt')
 
 
 def run_plot():
