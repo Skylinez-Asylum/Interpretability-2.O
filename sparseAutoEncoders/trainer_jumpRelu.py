@@ -7,9 +7,9 @@ from sae_jumprelu import JumpReluAutoEncoder
 
 config = {
     'activation_dim': 768,
-    'dict_dim': 16384*2,
+    'dict_dim': 16384*16,
     'l1_coeff': 1e-6,
-    'batch_size': 51200//2,
+    'batch_size': 51200//16,
     'num_epochs': 500,
     'lr': 1e-4,
     'gradient_clip_val': 1.0,

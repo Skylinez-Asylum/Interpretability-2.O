@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import trange
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from typing import List, Dict
-from activationManager import ActivationManager
+from sparseAutoEncoders.activationManager import ActivationManager
 
 class ActivationExtractor:
     def __init__(self, model_name: str = "Arjun-G-Ravi/chat-GPT2", device: str = "cuda", batch_size: int = 8):

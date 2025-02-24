@@ -1,4 +1,4 @@
-from activationManager import ActivationManager
+from sparseAutoEncoders.activationManager import ActivationManager
 from model import load_model
 from warnings import filterwarnings
 import tiktoken

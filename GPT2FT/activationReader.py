@@ -1,4 +1,4 @@
-from activationManager import ActivationManager
+from sparseAutoEncoders.activationManager import ActivationManager
 
 manager = ActivationManager("/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2FT/activations.pkl")
 
