@@ -7,18 +7,22 @@ from sae_jumprelu import JumpReluAutoEncoder
 
 config = {
     'activation_dim': 768,
-    'dict_dim': 16384*16,
+    'dict_dim': 16384*4,
     'l1_coeff': 1e-6,
-    'batch_size': 51200//16,
+    'batch_size': 51200//4,
     'num_epochs': 500,
     'lr': 1e-4,
     'gradient_clip_val': 1.0,
-    'checkpoint_frequency': 100,
+    'checkpoint_frequency': 50,
     'weight_decay': 1e-5,
     'gradient_clip_val': 2,
     'resample_freq': 600,
 }
-version=4
+
+### For naming
+version=5
+# ------------
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 dataset = SAE_Dataset('/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2/GPT2activations.npy')
 train_size = int(0.8 * len(dataset))
