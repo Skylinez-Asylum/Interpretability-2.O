@@ -1,90 +1,3 @@
-# import torch
-# import torch.nn as nn
-# import torch.nn.functional as F
-# # from sae_relu import ReluAutoEncoder
-# from sae_jumprelu import JumpReluAutoEncoder
-# import matplotlib.pyplot as plt
-# import numpy as np
-
-# # Configuration (same as your training setup)
-
-# config = {
-#     'activation_dim': 768,
-#     'dict_dim': 16384*16,
-#     'l1_coeff': 3e-4,
-#     # 'batch_size': 128,
-#     'lr': 5e-4,
-#     'dropout_rate': 0.1,
-#     'weight_decay': 1e-5,
-#     'gradient_clip_val': 0.5  
-# }
-# num = 128*4
-# device = torch.device('cuda')
-
-# # Load the model
-# model = JumpReluAutoEncoder(cfg=config).to(device)
-# checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/GPT2_jumprelu/checkpoint_epoch_500v4.pt'
-
-# # Load checkpoint
-# checkpoint = torch.load(checkpoint_path, map_location=device)
-# model.load_state_dict(checkpoint['model_state_dict'])
-# print(f"Loaded checkpoint from epoch {checkpoint['epoch']} with loss {checkpoint['loss']:.6f}")
-
-# model.eval()
-
-# # Function to process an activation and return number of active neurons and activations
-# def get_active_neurons(activation, model, device='cuda'):
-#     with torch.no_grad():
-#         _, _, acts, _, _ = model(activation)
-#     active_neurons = (acts > 0).squeeze(0)  # Shape: [16384]
-#     active_indices = active_neurons.nonzero(as_tuple=True)[0]
-#     return len(active_indices), acts
-
-# # Function to visualize activations
-# def visualize_activation(acts, title):
-#     acts_np = acts.squeeze(0).cpu().numpy()  # Shape: [16384]
-#     grid_size = int(np.sqrt(config['dict_dim']))  # 128 for 16384 (128x128)
-#     acts_2d = acts_np.reshape(num, num)  # Reshape to 128x128
-
-#     # Create a color map: green for positive, red for zero/negative
-#     color_map = np.zeros((num, num, 3))  # RGB
-#     color_map[acts_2d > 0] = [0, 1, 0]  # Green for positive
-#     color_map[acts_2d == 0] = [1, 0, 0]  # Red for zero/negative
-
-#     # Plot the image
-#     plt.figure(figsize=(6, 6))
-#     plt.imshow(color_map, interpolation='nearest')
-#     plt.title(title)
-#     plt.axis('off')
-#     plt.show()
-
-# # Load activations
-# activations_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2/GPT2activations.npy'
-# all_activations = torch.from_numpy(np.load(activations_path)).to(device)  # Shape: [148640, 768]
-# print(f"Loaded {all_activations.shape[0]} activations")
-
-# # Process all activations and count active neurons
-# results = []
-# for idx in range(all_activations.shape[0]):
-#     activation = all_activations[idx:idx+1]  # Shape: [1, 768]
-#     num_active, acts = get_active_neurons(activation, model, device)
-#     results.append((idx, num_active, acts))
-#     if idx % 1000 == 0:
-#         print(f"Processed {idx} activations")
-
-# # Sort by number of active neurons (ascending) and get top 20
-# results_sorted = sorted(results, key=lambda x: x[1])[:20]
-
-# # Display top 20 results
-# print("\nTop 20 Activations with Minimum Active Neurons:")
-# for rank, (idx, num_active, acts) in enumerate(results_sorted, 1):
-#     print(f"Rank {rank}: Index {idx}, Active Neurons: {num_active}")
-#     visualize_activation(acts, f"Activation {idx} - {num_active} Active Neurons")
-
-# # To future me: add the code to find the token whose activation caused this. 
-
-
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -98,11 +11,6 @@ config = {
     'activation_dim': 768,
     'dict_dim': 16384*16,
     'l1_coeff': 3e-4,
-    'batch_size': 128,
-    'lr': 5e-4,
-    'dropout_rate': 0.1,
-    'weight_decay': 1e-5,
-    'gradient_clip_val': 0.5
 }
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -112,16 +20,15 @@ os.makedirs('activation_visualizations', exist_ok=True)
 
 # Load the model
 model = JumpReluAutoEncoder(cfg=config).to(device)
-checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/GPT2_jumprelu/checkpoint_epoch_500v4.pt'
+checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/GPT2_jumprelu/checkpoint_epoch_200v4.pt'
 
 # Load checkpoint
-checkpoint = torch.load(checkpoint_path, map_location=device)
+checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
 model.load_state_dict(checkpoint['model_state_dict'])
 print(f"Loaded checkpoint from epoch {checkpoint['epoch']} with loss {checkpoint['loss']:.6f}")
 
 model.eval()
 
-# Function to visualize activations
 def visualize_activation(acts, idx, num_active, save_dir='activation_visualizations'):
     # Move to CPU and convert to numpy to free GPU memory
     acts_np = acts.squeeze(0).cpu().numpy()
@@ -150,7 +57,6 @@ def visualize_activation(acts, idx, num_active, save_dir='activation_visualizati
     plt.savefig(f"{save_dir}/activation_{idx}_{num_active}_neurons.png")
     plt.close()  # Close the figure to free memory
 
-# Function to process activations in batches
 def process_activations(activations_path, batch_size=32, top_n=20, max_activations=None):
     # Get total number of activations without loading everything
     total_shape = np.load(activations_path, mmap_mode='r').shape
@@ -213,22 +119,11 @@ def process_activations(activations_path, batch_size=32, top_n=20, max_activatio
 if __name__ == "__main__":
     activations_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2/GPT2activations.npy'
     
-    # Ask user for parameters
-    max_activations = input("How many activations to process? (default: all): ")
-    max_activations = int(max_activations) if max_activations.strip() else None
-    
-    batch_size = input("Batch size (default: 32): ")
-    batch_size = int(batch_size) if batch_size.strip() else 32
-    
-    top_n = input("Number of top results to find (default: 20): ")
-    top_n = int(top_n) if top_n.strip() else 20
-    
-    # Process activations and get top results
     results_sorted = process_activations(
         activations_path, 
-        batch_size=batch_size,
-        top_n=top_n,
-        max_activations=max_activations
+        batch_size=32,
+        top_n=20,
+        max_activations=None # give the number of activations to take(None takes all)
     )
     
     # Display results
