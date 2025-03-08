@@ -42,7 +42,7 @@ if __name__ == '__main__':
     torch.set_float32_matmul_precision('high')  # use tf32 <- the answers didnt seem much better
     print('Loading model...')
 
-    model_id = 1
+    model_id = 3
     if model_id == 1: # Best non fine tuned model with 6 attention heads
         path = r"customGPT2/save_states/6headNFT555k.pt"
     elif model_id == 2: # Best Fine tuned model with 6 attention heads
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     if model_id != 3: model = load_model(path)
     model.to('cuda')
     ('Model loaded\n\n')
-    inp= "Q: who is john Wick? A: "
+    inp= "What is your name?"
     out = inference(model,inp,30,10)
     for i in out:
         print(i, '\n')
