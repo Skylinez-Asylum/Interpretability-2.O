@@ -147,10 +147,10 @@ def process_prompts_and_save_activations(
     return responses
 
 if __name__ == "__main__":
-    manager = ActivationManager("activations/GPT2/activations.pkl")
+    manager = ActivationManager("activations/GPT2/activationsJJ.pkl")
     print('GPU available:', torch.cuda.is_available())
     
-    with open('activationDataset.txt', 'r') as f:
+    with open('activationDatasetJJ.txt', 'r') as f:
         text = f.read()
     if not text:
         print('text not found')
