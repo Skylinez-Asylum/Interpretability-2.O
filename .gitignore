@@ -7,3 +7,4 @@ activations/
 .env
 activation_visualizations
 custom_gpt_model/
+neuron_activation_counts

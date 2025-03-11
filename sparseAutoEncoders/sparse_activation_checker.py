@@ -1,4 +1,4 @@
-'''Code to process randomly generated activations, no longer needed. Will be removed soon'''
+'''Code to process randomly generated activations, no longer needed. Will be removed'''
 
 
 import torch

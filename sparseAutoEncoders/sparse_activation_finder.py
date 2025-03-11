@@ -68,7 +68,7 @@ def process_activations(activations_path, batch_size=32, top_n=20, max_activatio
     print(f"Processing {total_activations} activations with batch size {batch_size}")
     
     results = []
-    chunk_size = min(5000, total_activations)  # Load at most 5000 at a time to save memory
+    chunk_size = min(10000, total_activations)  # Load at most 10k at a time to save memory
     
     for chunk_start in range(0, total_activations, chunk_size):
         chunk_end = min(chunk_start + chunk_size, total_activations)
@@ -131,7 +131,7 @@ if __name__ == "__main__":
     
     # Display results
     print("\nTop Activations with Minimum Active Neurons:")
-    for rank, (idx, num_active, _) in enumerate(results_sorted, 1):
+    for rank, (idx, num_active, _) in enumerate(results_sorted, 10):
         print(f"Rank {rank}: Index {idx}, Active Neurons: {num_active}")
     
     # Ask user if they want to visualize
