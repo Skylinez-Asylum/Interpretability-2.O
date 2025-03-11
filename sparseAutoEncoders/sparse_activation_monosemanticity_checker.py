@@ -2,15 +2,20 @@ import torch
 import torch.nn as nn
 import numpy as np
 import os
+from sae_jumprelu import JumpReluAutoEncoder
 
-from sae_jumprelu import JumpReluAutoEncoder  # Assuming this is your custom SAE class
-
+# --- Adjust these
+checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/GPT2_jumprelu/checkpoint_epoch_200v4.pt'
 # Optimized configuration
 config = {
     'activation_dim': 768,
     'dict_dim': 16384*16,
-    'l1_coeff': 3e-4,
+    'l1_coeff': 3e-4, # just need to initialize the model
 }
+
+activations_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2/GPT2activations.npy'
+
+# --- Adjust these
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -19,7 +24,6 @@ os.makedirs('neuron_activation_counts', exist_ok=True)
 
 # Load the model
 model = JumpReluAutoEncoder(cfg=config).to(device)
-checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/GPT2_jumprelu/checkpoint_epoch_200v4.pt'
 
 # Load checkpoint
 checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
@@ -31,14 +35,6 @@ model.eval()
 def process_activations(activations_path, batch_size=32, max_activations=None):
     """
     Process activations and count how many times each neuron is activated.
-    
-    Args:
-        activations_path: Path to .npy file with activations
-        batch_size: Number of activations to process at once
-        max_activations: Maximum number of activations to process (None for all)
-    
-    Returns:
-        neuron_activation_counts: Tensor with count of activations per neuron
     """
     # Get total number of activations
     total_shape = np.load(activations_path, mmap_mode='r').shape
@@ -49,16 +45,14 @@ def process_activations(activations_path, batch_size=32, max_activations=None):
     # Initialize counter for neuron activations
     neuron_activation_counts = torch.zeros(config['dict_dim'], dtype=torch.long, device=device)
     
-    chunk_size = min(5000, total_activations)  # Process in chunks to manage memory
+    chunk_size = min(10000, total_activations)  # Process in chunks to manage memory
     
-    for chunk_start in range(0, total_activations, chunk_size):
+    for chunk_start in range(0, total_activations, chunk_size): 
         chunk_end = min(chunk_start + chunk_size, total_activations)
         print(f"Processing chunk {chunk_start} to {chunk_end}")
         
         # Load chunk of activations
-        activations_chunk = torch.from_numpy(
-            np.load(activations_path, mmap_mode='r')[chunk_start:chunk_end]
-        ).to(device)
+        activations_chunk = torch.tensor(np.load(activations_path, mmap_mode='r')[chunk_start:chunk_end] ).to(device)
         
         # Process in batches
         for batch_start in range(0, activations_chunk.shape[0], batch_size):
@@ -98,7 +92,6 @@ def save_results(neuron_counts, save_path='neuron_activation_counts/neuron_count
 
 # Main execution
 if __name__ == "__main__":
-    activations_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2/GPT2activations.npy'
     
     # Ask user for number of activations to process
     max_acts_input = input("Enter number of activations to process (or 'all' for all activations): ")
