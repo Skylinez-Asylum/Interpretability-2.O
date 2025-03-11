@@ -1,3 +1,6 @@
+'''
+This code will load SAE save and will tell you how many neurons are being active for each activation
+'''
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

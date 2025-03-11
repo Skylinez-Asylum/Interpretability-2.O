@@ -1,3 +1,6 @@
+'''Code to process randomly generated activations, no longer needed. Will be removed soon'''
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -23,8 +26,7 @@ device = torch.device('cuda')
 
 # Load the model
 model = JumpReluAutoEncoder(cfg=config).to(device)
-checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/GPT2_jumprelu/checkpoint_epoch_500v3.pt'
-
+checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/GPT2_jumprelu/checkpoint_epoch_200v4.pt'
 # Load checkpoint
 checkpoint = torch.load(checkpoint_path, map_location=device)
 model.load_state_dict(checkpoint['model_state_dict'])
@@ -47,10 +49,10 @@ def process_random_activation(activation, model, device='cuda'):
     # Prepare activation visualization
     acts_np = acts.squeeze(0).cpu().numpy()  # Shape: [16384]
     grid_size = int(np.sqrt(config['dict_dim']))  # 128 for 16384 (128x128)
-    acts_2d = acts_np.reshape(128, 128*2)  # Reshape to 128x128
+    acts_2d = acts_np.reshape(512, 512)  # Reshape to 128x128
 
     # Create a color map: green for positive, red for zero/negative
-    color_map = np.zeros((128, 128*2, 3))  # RGB
+    color_map = np.zeros((512, 512, 3))  # RGB
     color_map[acts_2d > 0] = [0, 1, 0]  # Green for positive
     color_map[acts_2d == 0] = [1, 0, 0]  # Red for zero/negative
     color_map[acts_2d < 0] = [0, 0, 1] # Blue never going to happen
