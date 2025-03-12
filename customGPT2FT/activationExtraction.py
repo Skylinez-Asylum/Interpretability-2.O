@@ -1,4 +1,3 @@
-from sparseAutoEncoders.activationManager import ActivationManager
 from model import load_model
 from warnings import filterwarnings
 import tiktoken
@@ -13,18 +12,19 @@ from tqdm import trange
 filterwarnings('ignore')
 
 class ActivationExtractor:
-    def __init__(self, model_path: str, batch_size: int = 64, attention_head=6):  # Increased default batch size
-        from dataclasses import dataclass
+    def __init__(self, model_path: str, batch_size: int = 64, attention_head=12):  # Increased default batch size
+        if attention_head!=6:
+            from dataclasses import dataclass
 
-        @dataclass
-        class GPTConfig:
-                block_size:int = 1024
-                vocab_size:int = 50304
-                n_layer:int   = 12
-                n_head:int = attention_head
-                n_embd:int = 768
-        self.model = load_model(path, GPTConfig)
-
+            @dataclass
+            class GPTConfig:
+                    block_size:int = 1024
+                    vocab_size:int = 50304
+                    n_layer:int   = 12
+                    n_head:int = 12
+                    n_embd:int = 768
+            self.model = load_model(path, GPTConfig)
+        else: self.model = load_model(model_path)
         self.model.to('cuda')
         self.tokenizer = tiktoken.get_encoding('gpt2')
         self.batch_size = batch_size
@@ -96,36 +96,6 @@ class ActivationExtractor:
         
         return generated_texts, all_activations, all_tokens
 
-def process_prompts_and_save_activations(
-    prompts: List[str],
-    activation_manager: ActivationManager,
-    model_path: str,
-    max_length: int = 200,
-    temperature: float = 0.5,
-    num_sequences: int = 1,
-    attention_head=6,
-    batch_size: int = 64  # Increased default batch size
-) -> Dict[str, List[str]]:
-    extractor = ActivationExtractor(model_path, batch_size=batch_size, attention_head=attention_head)
-    responses = {}
-    
-    for i in trange(0, len(prompts), batch_size):
-        batch_prompts = prompts[i:i + batch_size]
-        
-        generated_texts, activations, tokens = extractor.generate_and_extract(
-            batch_prompts,
-            max_length=max_length,
-            temperature=temperature,
-        )
-        
-        for j, prompt in enumerate(batch_prompts):
-            for activation, token in zip(activations[j], tokens[j]):
-                activation_manager.add_activation(activation, token)
-            responses[prompt] = [generated_texts[j]]
-    
-    activation_manager._save_activations()
-    
-    return responses
 
 class ActivationManager:
     def __init__(self, storage_path: str = 'activations/CustomGPT2/activations.pkl'):
@@ -162,29 +132,64 @@ class ActivationManager:
             return {"total": total_count, "Vocabulary": {k: len(v) for k, v in self.activations.items()}}
         return {"total": total_count}
 
+
+
+
+def process_prompts_and_save_activations(
+    prompts: List[str],
+    activation_manager: ActivationManager,
+    model_path: str,
+    max_length: int = 200,
+    temperature: float = 0.5,
+    num_sequences: int = 1,
+    attention_head=6,
+    batch_size: int = 64  # Increased default batch size
+) -> Dict[str, List[str]]:
+    extractor = ActivationExtractor(model_path, batch_size=batch_size, attention_head=attention_head)
+    responses = {}
+    
+    for i in trange(0, len(prompts), batch_size):
+        batch_prompts = prompts[i:i + batch_size]
+        
+        generated_texts, activations, tokens = extractor.generate_and_extract(
+            batch_prompts,
+            max_length=max_length,
+            temperature=temperature,
+        )
+        
+        for j, prompt in enumerate(batch_prompts):
+            for activation, token in zip(activations[j], tokens[j]):
+                activation_manager.add_activation(activation, token)
+            responses[prompt] = [generated_texts[j]]
+    
+    activation_manager._save_activations()
+    
+    return responses
+
 if __name__ == "__main__":
     torch.set_float32_matmul_precision('high')
-    path = r"customGPT2/save_states/6headFT50k.pt"
+    path = r"/home/arjun/Desktop/GitHub/Interpretability-2.O/customGPT2FT/save_states/6headFT6epoch-best.pt"
     
-    manager = ActivationManager("activations/CustomGPT2/activations.pkl")
+    manager = ActivationManager("activations/CustomGPT2FT/activations.pkl")
     print('GPU available:', torch.cuda.is_available())
     
-    with open('activationDataset.txt', 'r') as f:
+    with open('/home/arjun/Desktop/GitHub/Interpretability-2.O/activationDatasetFromFinewebEdu.txt', 'r') as f:
         text = f.read()
     if not text:
         print('text not found')
         quit()
     prompts = text.split('\n')
+    print(prompts[:100])
     
-    responses = process_prompts_and_save_activations(
-        prompts,
-        manager,
-        path,
-        max_length=200,
-        temperature=0.5,
-        num_sequences=1,
-        batch_size=512  # Increased to use more VRAM
-    )
+    # responses = process_prompts_and_save_activations(
+    #     prompts,
+    #     manager,
+    #     path,
+    #     max_length=200,
+    #     temperature=0.5,
+    #     num_sequences=1,
+    #     batch_size=512  # Increased to use more VRAM
+    # )
     
-    stats = manager.get_stats(show_vocabulary=True)
-    print(f"\nStats after processing: {stats}")
+    # stats = manager.get_stats(show_vocabulary=True)
+    # print(f"\nStats after processing: {stats}")
