@@ -4,6 +4,7 @@ import tiktoken
 import torch
 from torch.nn import functional as F
 from print_color import print
+
 filterwarnings('ignore')
 
 def inference(model,inp:str,max_length:int = 50,num_return_sequences:int =1, extracting_activations = False):
@@ -56,11 +57,13 @@ if __name__ == '__main__':
     model = load_model(path, GPTConfig)
     model.to('cuda')
     print('Model loaded\n\n')
-    qn = 'hi'
 
-    inp = f'''
-Below is an instruction that describes a task.Write a response that appropriately completes the request.\n\n### Instruction:\n {qn}\n\n### Input:\n\n### Response:
-'''
-    out = inference(model,inp,70,1)
-    for i in out:
-        print(i, '\n')
+    qn = 'hi'
+    while qn:
+        qn = input('Qn: ')
+        inp = f'''Below is an instruction that describes a task.Write a response that appropriately completes the request.\n\n### Instruction:\n {qn}\n\n### Input:\n\n### Response:'''
+        out = inference(model,inp,70,1)[0]
+        ans_part = out.split('Response:')[1]
+        ans_part = ans_part.split('<|endoftext|>')[0]
+        print(ans_part,color='g')
+        # print(out)
