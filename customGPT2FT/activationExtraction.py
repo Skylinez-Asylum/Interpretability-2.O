@@ -147,6 +147,7 @@ def process_prompts_and_save_activations(
 ) -> Dict[str, List[str]]:
     extractor = ActivationExtractor(model_path, batch_size=batch_size, attention_head=attention_head)
     responses = {}
+    print('started extracting activations')
     
     for i in trange(0, len(prompts), batch_size):
         batch_prompts = prompts[i:i + batch_size]
@@ -168,28 +169,35 @@ def process_prompts_and_save_activations(
 
 if __name__ == "__main__":
     torch.set_float32_matmul_precision('high')
-    path = r"/home/arjun/Desktop/GitHub/Interpretability-2.O/customGPT2FT/save_states/6headFT6epoch-best.pt"
+    path = r"/home/arjun/Desktop/GitHub/Interpretability-2.O/customGPT2FT/save_states/12headFT9epoch-best.pt"
     
     manager = ActivationManager("activations/CustomGPT2FT/activations.pkl")
     print('GPU available:', torch.cuda.is_available())
     
-    with open('/home/arjun/Desktop/GitHub/Interpretability-2.O/activationDatasetFromFinewebEdu.txt', 'r') as f:
+    with open('/home/arjun/Desktop/GitHub/Interpretability-2.O/activationDatasetAlpacaDataset.txt', 'r') as f:
         text = f.read()
     if not text:
         print('text not found')
         quit()
     prompts = text.split('\n')
-    print(prompts[:100])
+    out = []
+    for prompt in prompts:
+        inp = f'''Below is an instruction that describes a task.Write a response that appropriately completes the request.\n\n### Instruction:\n {prompt}\n\n### Input:\n\n### Response:'''
+
+        out.append(inp)
+    prompts = out
+    print(len(prompts))
+    print('dataset created')
     
-    # responses = process_prompts_and_save_activations(
-    #     prompts,
-    #     manager,
-    #     path,
-    #     max_length=200,
-    #     temperature=0.5,
-    #     num_sequences=1,
-    #     batch_size=512  # Increased to use more VRAM
-    # )
+    responses = process_prompts_and_save_activations(
+        prompts,
+        manager,
+        path,
+        max_length=200,
+        temperature=0.7,
+        num_sequences=1,
+        batch_size=512  # Increased to use more VRAM
+    )
     
-    # stats = manager.get_stats(show_vocabulary=True)
-    # print(f"\nStats after processing: {stats}")
+    stats = manager.get_stats(show_vocabulary=True)
+    print(f"\nStats after processing: {stats}")
