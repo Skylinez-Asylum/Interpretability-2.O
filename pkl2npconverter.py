@@ -2,7 +2,7 @@ from GPT2FT.activationManager import ActivationManager
 import numpy as np
 
 # To convert
-manager = ActivationManager("/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2/activations.pkl")
+manager = ActivationManager("/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/CustomGPT2FT/activations.pkl")
 print(f"Activation stats: {manager.get_stats()}")
 activations = []
 for k,v in manager._load_activations().items():
@@ -10,7 +10,7 @@ for k,v in manager._load_activations().items():
 
 print(len(activations))
 activations = np.array(activations)
-np.save('activations/GPT2/GPT2activations.npy', activations)
+np.save('activations/CustomGPT2FT/activations.npy', activations)
 
 # # To load data
 # data = np.load('GPT2activations.npy')

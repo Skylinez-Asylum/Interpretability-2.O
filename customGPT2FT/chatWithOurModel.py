@@ -49,11 +49,11 @@ if __name__ == '__main__':
             block_size:int = 1024
             vocab_size:int = 50304
             n_layer:int   = 12
-            n_head:int = 6
+            n_head:int = 12
             n_embd:int = 768
     
 
-    path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/customGPT2FT/save_states/6headFT6epoch-best.pt'
+    path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/customGPT2FT/save_states/12headFT9epoch-best.pt'
     model = load_model(path, GPTConfig)
     model.to('cuda')
     print('Model loaded\n\n')

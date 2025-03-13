@@ -7,7 +7,7 @@ from sae_jumprelu import JumpReluAutoEncoder
 
 config = {
     'activation_dim': 768,
-    'dict_dim': 16384*4,
+    'dict_dim': 16384//2,
     'l1_coeff': 1e-6,
     'batch_size': 51200//4,
     'num_epochs': 500,
@@ -20,12 +20,13 @@ config = {
 }
 
 ### For naming
-version=5
+version=1
 # ------------
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-dataset = SAE_Dataset('/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2/GPT2activations.npy')
-train_size = int(0.8 * len(dataset))
+print(device)
+dataset = SAE_Dataset('/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/CustomGPT2FT/activations.npy')
+train_size = int(0.75 * len(dataset))
 val_size = len(dataset) - train_size
 train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
 
@@ -99,7 +100,7 @@ for epoch in range(config['num_epochs']):
     # Save checkpoint
     if (epoch + 1) % config['checkpoint_frequency'] == 0:
         save_checkpoint(model, optimizer, epoch, avg_train_loss, 
-                       f'checkpoint_epoch_{epoch+1}v{version}.pt')
+                       f'/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/CustomFT_jumprelu/model_{epoch+1}v{version}.pt')
 
 
 # Plotting function
