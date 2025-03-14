@@ -5,16 +5,16 @@ import os
 from sae_jumprelu import JumpReluAutoEncoder
 
 # --- Adjust these
-checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/GPT2_jumprelu/checkpoint_epoch_200v4.pt'
+checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/CustomFT_jumprelu/model_10v1.pt'
 # Optimized configuration
 config = {
     'activation_dim': 768,
-    'dict_dim': 16384*16,
-    'l1_coeff': 3e-4, # just need to initialize the model
+    'dict_dim': 16384,
+    'l1_coeff': 3e-4, # just need to initialize the model, never used
 }
 
-activations_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2/GPT2activations.npy'
-
+activations_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/CustomGPT2FT/activations_scaled.npy'
+image_shape = (128, 128) # This should multiply to give dict_dim
 # --- Adjust these
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -45,7 +45,7 @@ def process_activations(activations_path, batch_size=32, max_activations=None):
     # Initialize counter for neuron activations
     neuron_activation_counts = torch.zeros(config['dict_dim'], dtype=torch.long, device=device)
     
-    chunk_size = min(10000, total_activations)  # Process in chunks to manage memory
+    chunk_size = min(100000, total_activations)  # Process in chunks to manage memory
     
     for chunk_start in range(0, total_activations, chunk_size): 
         chunk_end = min(chunk_start + chunk_size, total_activations)
@@ -82,20 +82,30 @@ def process_activations(activations_path, batch_size=32, max_activations=None):
     return neuron_activation_counts
 
 def save_results(neuron_counts, save_path='neuron_activation_counts/neuron_counts.txt'):
-    """Save neuron activation counts to a text file."""
+    """Save neuron activation counts to a text file and add activation frequency summary."""
     counts_cpu = neuron_counts.cpu().numpy()
+    
+    # Write individual neuron counts
     with open(save_path, 'w') as f:
         f.write("Neuron Activation Counts:\n")
         for i, count in enumerate(counts_cpu):
             f.write(f"Neuron {i}: {count} times\n")
+        
+        # Calculate frequency of activation counts
+        unique_counts, frequencies = np.unique(counts_cpu, return_counts=True)
+        f.write("\nActivation Frequency Summary:\n")
+        f.write("Number of Activations -> Number of Neurons\n")
+        for count, freq in zip(unique_counts, frequencies):
+            f.write(f"{count} -> {freq}\n")
+    
     print(f"Results saved to {save_path}")
 
 # Main execution
 if __name__ == "__main__":
     
     # Ask user for number of activations to process
-    max_acts_input = input("Enter number of activations to process (or 'all' for all activations): ")
-    max_activations = None if max_acts_input.lower() == 'all' else int(max_acts_input)
+    max_acts_input = input("Enter number of activations to process (Press enter to choose all): ")
+    max_activations = None if max_acts_input.lower() == '' else int(max_acts_input)
     
     # Process activations and get neuron counts
     neuron_counts = process_activations(
@@ -123,8 +133,8 @@ if __name__ == "__main__":
         import matplotlib.pyplot as plt
         
         counts_np = neuron_counts.cpu().numpy()
-        plt.figure(figsize=(12, 6))
-        plt.hist(counts_np, bins=50, log=True)
+        plt.figure(figsize=(24, 6))
+        plt.hist(counts_np, bins=1000)
         plt.title("Distribution of Neuron Activation Counts")
         plt.xlabel("Number of Activations")
         plt.ylabel("Number of Neurons (log scale)")
