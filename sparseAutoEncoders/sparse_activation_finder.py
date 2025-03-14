@@ -12,9 +12,10 @@ import os
 # Optimized configuration
 config = {
     'activation_dim': 768,
-    'dict_dim': 16384*16,
+    'dict_dim': 16384,
     'l1_coeff': 3e-4,
 }
+checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/CustomFT_jumprelu/model_10v1.pt'
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -23,7 +24,6 @@ os.makedirs('activation_visualizations', exist_ok=True)
 
 # Load the model
 model = JumpReluAutoEncoder(cfg=config).to(device)
-checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/GPT2_jumprelu/checkpoint_epoch_200v4.pt'
 
 # Load checkpoint
 checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
@@ -68,7 +68,7 @@ def process_activations(activations_path, batch_size=32, top_n=20, max_activatio
     print(f"Processing {total_activations} activations with batch size {batch_size}")
     
     results = []
-    chunk_size = min(10000, total_activations)  # Load at most 10k at a time to save memory
+    chunk_size = min(50000, total_activations)
     
     for chunk_start in range(0, total_activations, chunk_size):
         chunk_end = min(chunk_start + chunk_size, total_activations)
