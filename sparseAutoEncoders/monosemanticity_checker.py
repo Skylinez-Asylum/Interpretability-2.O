@@ -5,7 +5,7 @@ import os
 from sae_jumprelu import JumpReluAutoEncoder
 
 # --- Adjust these
-checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/CustomFT_jumprelu/model_v10_5.pt'
+checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/CustomFT_jumprelu/model_v12_200.pt'
 config = {
     'activation_dim': 768,
     'dict_dim': 16384,

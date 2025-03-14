@@ -10,17 +10,17 @@ config = {
     'dict_dim': 16384,
     'l1_coeff': 5e-8,
     'batch_size': 51200,
-    'num_epochs': 30,
+    'num_epochs': 500,
     'lr': 1e-4,
     'gradient_clip_val': 1.0,
-    'checkpoint_frequency': 5,
+    'checkpoint_frequency': 25,
     'weight_decay': 1e-5,
     'gradient_clip_val': 2,
     'resample_freq': 500,
 }
 
 ### For naming
-version=10
+version=12
 # ------------
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
