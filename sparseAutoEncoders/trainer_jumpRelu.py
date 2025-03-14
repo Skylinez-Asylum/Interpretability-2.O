@@ -8,19 +8,19 @@ from sae_jumprelu import JumpReluAutoEncoder
 config = {
     'activation_dim': 768,
     'dict_dim': 16384,
-    'l1_coeff': 1e-6,
+    'l1_coeff': 5e-8,
     'batch_size': 51200,
-    'num_epochs': 500,
+    'num_epochs': 30,
     'lr': 1e-4,
     'gradient_clip_val': 1.0,
-    'checkpoint_frequency': 10,
+    'checkpoint_frequency': 5,
     'weight_decay': 1e-5,
     'gradient_clip_val': 2,
-    'resample_freq': 600,
+    'resample_freq': 500,
 }
 
 ### For naming
-version=2
+version=10
 # ------------
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -100,7 +100,7 @@ for epoch in range(config['num_epochs']):
     # Save checkpoint
     if (epoch + 1) % config['checkpoint_frequency'] == 0:
         save_checkpoint(model, optimizer, epoch, avg_train_loss, 
-                       f'/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/CustomFT_jumprelu/model_{epoch+1}v{version}.pt')
+                       f'/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/CustomFT_jumprelu/model_v{version}_{epoch+1}.pt')
 
 
 # Plotting function

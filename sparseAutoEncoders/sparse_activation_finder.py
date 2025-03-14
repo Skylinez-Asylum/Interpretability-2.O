@@ -15,8 +15,9 @@ config = {
     'dict_dim': 16384,
     'l1_coeff': 3e-4,
 }
-checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/CustomFT_jumprelu/model_10v1.pt'
+checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/CustomFT_jumprelu/model_1v3.pt'
 
+activations_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2/GPT2activations.npy'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Create output directory for visualizations
@@ -75,7 +76,7 @@ def process_activations(activations_path, batch_size=32, top_n=20, max_activatio
         print(f"Loading activations chunk {chunk_start} to {chunk_end}")
         
         # Load a chunk of activations
-        all_activations_chunk = torch.from_numpy(
+        all_activations_chunk = torch.tensor(
             np.load(activations_path, mmap_mode='r')[chunk_start:chunk_end]
         ).to(device)
         
@@ -120,7 +121,6 @@ def process_activations(activations_path, batch_size=32, top_n=20, max_activatio
 
 # Main execution
 if __name__ == "__main__":
-    activations_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2/GPT2activations.npy'
     
     results_sorted = process_activations(
         activations_path, 

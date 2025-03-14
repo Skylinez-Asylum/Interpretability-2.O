@@ -5,116 +5,104 @@ import os
 from sae_jumprelu import JumpReluAutoEncoder
 
 # --- Adjust these
-checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/CustomFT_jumprelu/model_10v1.pt'
-# Optimized configuration
+checkpoint_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/CustomFT_jumprelu/model_v10_5.pt'
 config = {
     'activation_dim': 768,
     'dict_dim': 16384,
-    'l1_coeff': 3e-4, # just need to initialize the model, never used
+    'l1_coeff': 3e-4,
 }
-
 activations_path = '/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/CustomGPT2FT/activations_scaled.npy'
-image_shape = (128, 128) # This should multiply to give dict_dim
+image_shape = (128, 128)
+overwrite = True # switch to adjust activation count
 # --- Adjust these
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-# Create output directory for results
 os.makedirs('neuron_activation_counts', exist_ok=True)
 
 # Load the model
 model = JumpReluAutoEncoder(cfg=config).to(device)
-
-# Load checkpoint
 checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
 model.load_state_dict(checkpoint['model_state_dict'])
 print(f"Loaded checkpoint from epoch {checkpoint['epoch']} with loss {checkpoint['loss']:.6f}")
-
 model.eval()
 
 def process_activations(activations_path, batch_size=32, max_activations=None):
     """
-    Process activations and count how many times each neuron is activated.
+    Process activations, count neuron activations, and track number of active neurons per activation.
     """
-    # Get total number of activations
     total_shape = np.load(activations_path, mmap_mode='r').shape
     total_activations = total_shape[0] if max_activations is None else min(total_shape[0], max_activations)
-    
     print(f"Processing {total_activations} activations with batch size {batch_size}")
     
-    # Initialize counter for neuron activations
     neuron_activation_counts = torch.zeros(config['dict_dim'], dtype=torch.long, device=device)
+    active_neurons_per_activation = []  # List to store number of active neurons per activation
     
-    chunk_size = min(100000, total_activations)  # Process in chunks to manage memory
+    chunk_size = min(100000, total_activations)
     
     for chunk_start in range(0, total_activations, chunk_size): 
         chunk_end = min(chunk_start + chunk_size, total_activations)
         print(f"Processing chunk {chunk_start} to {chunk_end}")
         
-        # Load chunk of activations
-        activations_chunk = torch.tensor(np.load(activations_path, mmap_mode='r')[chunk_start:chunk_end] ).to(device)
+        activations_chunk = torch.tensor(np.load(activations_path, mmap_mode='r')[chunk_start:chunk_end]).to(device)
         
-        # Process in batches
         for batch_start in range(0, activations_chunk.shape[0], batch_size):
             batch_end = min(batch_start + batch_size, activations_chunk.shape[0])
             batch = activations_chunk[batch_start:batch_end]
             
-            # Forward pass through the model
             with torch.no_grad():
                 _, _, acts, _, _ = model(batch)
             
-            # Count active neurons (acts > 0) across batch
-            active_neurons = (acts > 0).long()  # Convert to 1/0 tensor
-            batch_counts = active_neurons.sum(dim=0)  # Sum across batch dimension
+            # Count active neurons (acts > 0)
+            active_neurons = (acts > 0).long()
+            batch_counts = active_neurons.sum(dim=0)  # Total activations per neuron in batch
             neuron_activation_counts += batch_counts
             
-            # Clear memory
+            # Count number of active neurons per activation in this batch
+            num_active_per_activation = active_neurons.sum(dim=1)  # Sum across neurons for each activation
+            active_neurons_per_activation.extend(num_active_per_activation.cpu().tolist())
+            
             del batch
             torch.cuda.empty_cache()
             
             if (batch_start + batch_end) % (batch_size * 10) == 0:
                 print(f"Processed {chunk_start + batch_start + batch_end} activations")
         
-        # Clear chunk memory
         del activations_chunk
         torch.cuda.empty_cache()
     
-    return neuron_activation_counts
+    return neuron_activation_counts, active_neurons_per_activation
 
-def save_results(neuron_counts, save_path='neuron_activation_counts/neuron_counts.txt'):
-    """Save neuron activation counts to a text file and add activation frequency summary."""
+def save_results(neuron_counts, active_neurons_per_activation, save_path='neuron_activation_counts/neuron_counts.txt'):
+    """Save neuron activation counts and summary of active neurons per activation."""
     counts_cpu = neuron_counts.cpu().numpy()
-    
-    # Write individual neuron counts
     with open(save_path, 'w') as f:
         f.write("Neuron Activation Counts:\n")
         for i, count in enumerate(counts_cpu):
             f.write(f"Neuron {i}: {count} times\n")
         
-        # Calculate frequency of activation counts
-        unique_counts, frequencies = np.unique(counts_cpu, return_counts=True)
-        f.write("\nActivation Frequency Summary:\n")
-        f.write("Number of Activations -> Number of Neurons\n")
-        for count, freq in zip(unique_counts, frequencies):
+        # Calculate frequency of number of active neurons per activation
+        unique_active_counts, frequencies = np.unique(active_neurons_per_activation, return_counts=True)
+        f.write("\nNumber of Active Neurons per Activation Summary:\n")
+        f.write("Number of Active Neurons -> Number of Activations\n")
+        for count, freq in zip(unique_active_counts, frequencies):
             f.write(f"{count} -> {freq}\n")
     
     print(f"Results saved to {save_path}")
 
 # Main execution
 if __name__ == "__main__":
+    if overwrite:
+        max_activations = None
+    else:
+        max_acts_input = input("Enter number of activations to process (Press enter to choose all): ")
+        max_activations = None if max_acts_input.lower() == '' else int(max_acts_input)
     
-    # Ask user for number of activations to process
-    max_acts_input = input("Enter number of activations to process (Press enter to choose all): ")
-    max_activations = None if max_acts_input.lower() == '' else int(max_acts_input)
-    
-    # Process activations and get neuron counts
-    neuron_counts = process_activations(
+    neuron_counts, active_neurons_per_activation = process_activations(
         activations_path,
         batch_size=32,
         max_activations=max_activations
     )
     
-    # Print summary
     total_activations_processed = np.load(activations_path, mmap_mode='r').shape[0] if max_activations is None else min(np.load(activations_path, mmap_mode='r').shape[0], max_activations)
     print("\nSummary:")
     print(f"Total activations processed: {total_activations_processed}")
@@ -123,12 +111,10 @@ if __name__ == "__main__":
     print(f"Least active neuron count: {neuron_counts.min().item()}")
     print(f"Average activations per neuron: {neuron_counts.float().mean().item():.2f}")
     
-    # Save results
-    print(neuron_counts)
-    save_results(neuron_counts)
-    
-    # Ask for visualization
-    visualize = input("Do you want to visualize the neuron activation counts? (y/n): ").lower() == 'y'
+    save_results(neuron_counts, active_neurons_per_activation)
+    if not overwrite: 
+        visualize = input("Do you want to visualize the neuron activation counts? (y/n): ").lower() == 'y'
+    else: visualize = True
     if visualize:
         import matplotlib.pyplot as plt
         
