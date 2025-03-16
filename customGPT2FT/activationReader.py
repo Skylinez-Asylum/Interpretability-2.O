@@ -1,10 +1,13 @@
+# from sparseAutoEncoders.activationManager import ActivationManager
+
+
 import numpy as np
 import pickle
 from pathlib import Path
 from typing import Dict, List, Optional
 
 class ActivationManager:
-    def __init__(self, storage_path: str = 'activations/activations.pkl'):
+    def __init__(self, storage_path):
         self.storage_path = Path(storage_path)
         self.activations: Dict[str, List[np.ndarray]] = self._load_activations()
     
@@ -74,21 +77,18 @@ class ActivationManager:
             self.activations.clear()
         self._save_activations()
 
-if __name__ == "__main__":
-    # Example usage
-    manager = ActivationManager("activations/GPT2FT/activations.pkl")
-    
-    # Add single activation for "dog" category
-    # activation = np.random.rand(756)
-    # manager.add_activation(activation, category="dog")
-    
-    # # Add batch of activations for "cat" category
-    # batch_activations = [np.random.rand(756) for _ in range(10)]
-    # manager.add_activations_batch(batch_activations, category="cat")
-    
-    # Retrieve and display stats
-    stats = manager.get_stats(show_vocabulary=True)
-    print(f"Stats: {stats}")
 
-    dog_activations = manager.get_activations('is')
-    print('Dog shape:', dog_activations[0].shape)
+
+
+manager = ActivationManager("/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/CustomGPT2FT/activations.pkl")
+
+
+stats = manager.get_stats(show_vocabulary=True)
+print(f"Activation stats: {stats}")
+
+
+print('---')
+
+act = manager.get_activations(' is')
+print(len(act))
+print(act[0].shape)

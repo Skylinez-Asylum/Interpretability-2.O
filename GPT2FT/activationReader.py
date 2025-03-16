@@ -83,7 +83,7 @@ class ActivationManager:
 manager = ActivationManager("/home/arjun/Desktop/GitHub/Interpretability-2.O/activations/GPT2FT/activations.pkl")
 
 
-stats = manager.get_stats(show_vocabulary=False)
+stats = manager.get_stats(show_vocabulary=True)
 print(f"Activation stats: {stats}")
 
 
