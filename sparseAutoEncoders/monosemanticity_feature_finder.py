@@ -1,5 +1,5 @@
 '''
-This code finds the tokens for which a given SAE activates one neuron
+This code finds the tokens for which a given SAE activates one neuron, not sure if this guy is properly utilising cuda, but this taks 2mins, so will optimise later
 '''
 
 import torch
@@ -7,7 +7,7 @@ import numpy as np
 from sae_jumprelu import JumpReluAutoEncoder
 from activationManager import ActivationManager
 from tqdm import tqdm
-filename = 'model_v11_50.pt'
+filename = 'model_v5_10.pt'
 def analyze_neuron_activations(
     checkpoint_path: str = f'/home/arjun/Desktop/GitHub/Interpretability-2.O/sparseAutoEncoders/save_states/CustomFT_jumprelu/{filename}',
    
