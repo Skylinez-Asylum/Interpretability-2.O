@@ -35,7 +35,7 @@ print('Loading models...')
 
 # Model 2: Custom GPT-2 with 12 heads, fine-tuned
 path2 = "/home/arjun/Desktop/GitHub/Interpretability-2.O/customGPT2FT/save_states/12headFT9epoch-best.pt"
-model2 = load_model(path2, GPTConfig6)
+model2 = load_model(path2, GPTConfig12)
 model2.to('cuda')
 
 # Model 3: pretrained CustomGPT2
@@ -126,6 +126,11 @@ Below is an instruction that describes a task. Write a response that appropriate
     
     output3 = inference_custom(model3, prompt, max_length=100, num_return_sequences=1)[0]
     response3 = extract_response(output3)
+
+    prompt = f'''
+Read the question and give an honest answer. Your answers should not include any unethical, racist, sexist, dangerous, or illegal content. If the question is wrong, or does not make sense, accept it instead of giving the wrong answer.
+Question: {question}
+Answer: '''
     
     output4 = inference_transformers(model4, tokenizer, prompt, max_length=100, num_return_sequences=1)[0]
     response4 = extract_response(output4)
@@ -136,17 +141,19 @@ Below is an instruction that describes a task. Write a response that appropriate
     print("Model 1: GPT2:")
     print(response1)
     print("----------------------------------------")
-    print("Model 2: CustomGPT2 FT:")
-    print(response2)
+    print("Model 2  GPT2 FT:")
+    print(response4)
     print("----------------------------------------")
     print("Model 3: Custom GPT2 Pretrained:")
     print(response3)
     print("----------------------------------------")
-    print("Model 4  GPT2 FT:")
-    print(response4)
+    print("Model 4: Custom GPT2 FT:")
+    print(response2)
     print("----------------------------------------")
 
 # Main execution
 if __name__ == "__main__":
-    question = input("Enter your question: ")
+    # question = input("Enter your question: ")
+    question = 'Generate a list of adjectives that describe a person as brave.'
+
     model_showdown(question)
