@@ -1,15 +1,1 @@
-# Models
-- [ ] 12 layer
-- [ ] 6 layer FT
-
-# TODO
-- [ ] Fine tune GPT-2
-- [ ] Take activation
-  - [ ] 12 attention
-  - [ ] GPT-2
-- [ ] Train SAE with jumprelu
-- [ ] Find monosemantic features from GPT-2 embeddings
-- [ ] Put SAE in model
-- [ ] Model steering
-- [ ] report make
-- [ ] Paper write
+Making GlassGPT and doing interpretability research on it
